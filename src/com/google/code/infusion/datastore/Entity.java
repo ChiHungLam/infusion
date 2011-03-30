@@ -7,6 +7,11 @@ public class Entity {
 	Key key;
 	TreeMap<String,Object> properties = new TreeMap<String,Object>();
 	
+	public Entity(String tableId) {
+		key = new Key();
+		key.kind = tableId;
+	}
+	
 	public Entity(Key key) {
 		this.key = key;
 	}
