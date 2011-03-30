@@ -4,11 +4,22 @@ package com.google.code.infusion.datastore;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.code.infusion.util.Util;
+
 public class Query {
 	
 	public enum FilterOperator {
-		EQUAL, GREATER_THAN, GREATER_THAN_OR_EQUAL,
-		IN, LESS_THAN, LESS_THAN_OR_EQUAL, NOT_EQUAL 
+		EQUAL("="), GREATER_THAN(">"), GREATER_THAN_OR_EQUAL(">="),
+		IN("in"), LESS_THAN("<"), LESS_THAN_OR_EQUAL("<="), NOT_EQUAL("<>");
+		
+		private String name;
+		FilterOperator(String name) {
+			this.name = name;
+		}
+		
+		public String toString() {
+			return name;
+		}
 	}
 	
 	public enum SortDirection {
@@ -92,8 +103,25 @@ public class Query {
 		public java.lang.Object getValue() {
 			return value;
 		}
+		
+		public String toString() {
+			return propertyName + " " + operator + " " + ((value instanceof String) ? Util.quote((String) value) : "" + value);
+		}
+		
+		
 	}
 
+	public String toString() {
+		StringBuilder sb = new StringBuilder("FROM ");
+		sb.append(kind);
+		for (int i = 0; i < filterPredicates.size(); i++) {
+			sb.append(i == 0 ? " WHERE" : " AND ");
+			sb.append(filterPredicates.get(i).toString());
+		}
+		return sb.toString();
+	}
+	
+	
 	public String getKind() {
 		return kind;
 	}
