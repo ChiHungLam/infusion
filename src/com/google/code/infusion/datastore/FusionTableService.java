@@ -64,21 +64,22 @@ public class FusionTableService {
 			rb = new RequestBuilder(RequestBuilder.GET,
 					"https://www.google.com/fusiontables/api/query?sql="
 							+ URLEncoder.encode(command, "utf-8"));
-		} catch (UnsupportedEncodingException e) {
+			rb.setHeader("Authorization", "GoogleLogin auth=" + authToken);	
+			rb.sendRequest(null, new RequestCallback() {
+				public void onResponseReceived(Request request,
+						com.google.gwt.http.client.Response response) {
+					System.out.println("SQL result: " + response.getText());
+					callback.onSuccess(response.getText().split("\n"));
+				}
+				
+				public void onError(Request request, Throwable exception) {
+					callback.onFailure(exception);
+				}
+			});
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		rb.setHeader("Authorization", "GoogleLogin auth=" + authToken);	
-		rb.sendRequest(null, new RequestCallback() {
-			public void onResponseReceived(Request request,
-					com.google.gwt.http.client.Response response) {
-				System.out.println("SQL result: " + response.getText());
-				callback.onSuccess(response.getText().split("\n"));
-			}
-			
-			public void onError(Request request, Throwable exception) {
-				callback.onFailure(exception);
-			}
-		});
+	
 	}
 
 	public PreparedQueryAsync prepareQuery(Query query) {

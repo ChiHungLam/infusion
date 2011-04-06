@@ -41,7 +41,7 @@ public class RequestBuilder extends com.google.gwt.http.client.RequestBuilder {
 	}
 
 	
-	public Request sendRequest(final String requestData, final RequestCallback callback) {
+	public Request sendRequest(final String requestData, final RequestCallback callback) throws RequestException{
 		Request request = new Request() {};
 		 
 		try {
@@ -143,7 +143,7 @@ public class RequestBuilder extends com.google.gwt.http.client.RequestBuilder {
 				};
 				callback.onResponseReceived(request, response);
 			} catch (MalformedURLException e) {
-				throw new RuntimeException(e);
+				throw new RequestException(e);
 			} catch (IOException e) {
 				callback.onError(request, e);
 			}  
