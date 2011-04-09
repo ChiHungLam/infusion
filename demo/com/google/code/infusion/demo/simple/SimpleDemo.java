@@ -8,8 +8,8 @@ import java.util.List;
 import com.google.code.infusion.datastore.ColumnInfo;
 import com.google.code.infusion.datastore.FusionTableService;
 import com.google.code.infusion.datastore.TableInfo;
+import com.google.code.infusion.util.AsyncCallback;
 import com.google.code.infusion.util.ClientLogin;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class SimpleDemo {
 	static BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -23,14 +23,15 @@ public class SimpleDemo {
 			return;
 		}
 
-		System.out.print("Password (email): ");
+		System.out.print("Password: ");
 		String password = reader.readLine();
 		if (password == null || password.length() == 0) {
 			return;
 		}
 		System.out.println("\f");
 
-		ClientLogin.requestAuthToken(user, password, new AsyncCallback<String>() {
+		ClientLogin.requestAuthToken(ClientLogin.ACCOUNT_TYPE_GOOGLE, 
+				user, password, "fusiontables", "GoogleCodeProjectInfusion-Infusion-0.1", new AsyncCallback<String>() {
 			public void onSuccess(String result) {
 				runSession(result);
 			}

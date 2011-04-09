@@ -1,5 +1,7 @@
 package com.google.code.infusion.util;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 public class Util {
@@ -64,6 +66,14 @@ public class Util {
 		parts.toArray(result);
 		return result;
 	
+	}
+
+	public static String urlEncode(String url) {
+		try {
+			return URLEncoder.encode(url, "utf-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

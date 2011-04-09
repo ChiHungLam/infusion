@@ -4,13 +4,14 @@ import java.util.List;
 
 import com.google.code.infusion.datastore.FusionTableService;
 import com.google.code.infusion.datastore.TableInfo;
+import com.google.code.infusion.util.AsyncCallback;
 import com.google.code.infusion.util.ClientLogin;
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -39,7 +40,7 @@ public class InfusionGwtDemo implements EntryPoint {
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
-		
+		Document.get().getElementById("loading").removeFromParent();
 		
 		Grid grid = new Grid(3, 2);
 				
@@ -55,7 +56,13 @@ public class InfusionGwtDemo implements EntryPoint {
 		final Button loginButton = new Button("Login");
 		loginButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
-				ClientLogin.requestAuthToken(email.getValue(), password.getValue(), new AsyncCallback<String>() {
+				ClientLogin.requestAuthToken(
+						ClientLogin.ACCOUNT_TYPE_GOOGLE, 
+						email.getValue(), 
+						password.getValue(), 
+						"fusiontables", 
+						"GoogleCodeProjectInfusion-InfusionDemo-0.1",
+						new AsyncCallback<String>() {
 					public void onSuccess(String result) {
 						authenticationObtained(result);
 					}
