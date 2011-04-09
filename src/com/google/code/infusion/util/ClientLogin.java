@@ -8,6 +8,7 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class ClientLogin {
@@ -26,7 +27,10 @@ public class ClientLogin {
 					new RequestCallback() {
 				public void onResponseReceived(Request request,
 								Response response) {
+					
+					Window.alert("'"+response.getText()+"'; status: " + response.getStatusCode() + "");
 							for (String line : response.getText().split("\n")) {
+								Window.alert("'"+line+"'");
 								if (line.startsWith("Auth=")) {
 									callback.onSuccess(line.substring(5));
 									return;
