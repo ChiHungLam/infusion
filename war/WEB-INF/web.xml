@@ -5,6 +5,18 @@
 
 <web-app>
   
+   <!-- Servlets -->
+  <servlet>
+    <servlet-name>proxyServlet</servlet-name>
+    <servlet-class>com.google.code.infusion.demo.gwt.server.ProxyServlet</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>proxyServlet</servlet-name>
+    <url-pattern>/infusiondemo/proxy</url-pattern>
+  </servlet-mapping>
+  
+  
   <!-- Default page to serve -->
   <welcome-file-list>
     <welcome-file>Infusion.html</welcome-file>

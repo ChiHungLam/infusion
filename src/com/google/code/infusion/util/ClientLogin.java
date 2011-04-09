@@ -1,49 +1,32 @@
 package com.google.code.infusion.util;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-
 public class ClientLogin {
-
-	public static void requestAuthToken(String email, String password,
+	public static final String ACCOUNT_TYPE_GOOGLE = "GOOGLE";
+	
+	public static void requestAuthToken(String accountType, String email, String password, String service, String source,
 			final AsyncCallback<String> callback) {
 		String data;
-		try {
-			data = "accountType=GOOGLE&Email="
-					+ URLEncoder.encode(email, "utf-8")
-					+ "&Passwd="
-					+ URLEncoder.encode(password, "utf-8")
-					+ "&service=fusiontables&source=GoogleCodeProjectInfusion-Infusion-0.1\r\n";
-			
-			new RequestBuilder(RequestBuilder.POST, "https://www.google.com/accounts/ClientLogin").sendRequest(data, 
-					new RequestCallback() {
-				public void onResponseReceived(Request request,
-								Response response) {
-							for (String line : response.getText().split("\n")) {
-								if (line.startsWith("Auth=")) {
-									callback.onSuccess(line.substring(5));
-									return;
-								}
-							}
-							callback.onFailure(new RuntimeException(
-									"Auth token not found in servr response"));
-						}
 
-						public void onError(Request request, Throwable exception) {
-							callback.onFailure(exception);
-						}
-					});
-			
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}	
+		data = "accountType=" + Util.urlEncode(accountType) + 
+			"&Email=" + Util.urlEncode(email) + 
+			"&Passwd=" + Util.urlEncode(password) +
+			"&service=" + Util.urlEncode(service) + 
+			"&source=" + Util.urlEncode(source) + "\r\n";
+		
+		HttpRequest request = new HttpRequest(HttpRequest.POST, "https://www.google.com/accounts/ClientLogin");
+		request.setHeader("Content-Type", "application/x-www-form-urlencoded");
+		request.setData(data);
+		request.send(new ChainedCallback<HttpResponse>(callback) {
+			public void onSuccess(HttpResponse response) {					
+				for (String line : response.getData().split("\n")) {
+					if (line.startsWith("Auth=")) {
+						callback.onSuccess(line.substring(5));
+						return;
+					}
+				}
+				callback.onFailure(new RuntimeException("Auth token not found in server response. Status code: " + response.getStatusCode() + " " + response.getStatusText()));
+			}
+		});
 	}
 
 }

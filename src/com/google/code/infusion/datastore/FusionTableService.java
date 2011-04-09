@@ -1,17 +1,15 @@
 package com.google.code.infusion.datastore;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.google.code.infusion.util.AsyncCallback;
 import com.google.code.infusion.util.ChainedCallback;
-import com.google.code.infusion.util.RequestBuilder;
+import com.google.code.infusion.util.HttpRequest;
+import com.google.code.infusion.util.HttpResponse;
 import com.google.code.infusion.util.Util;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class FusionTableService {
 
@@ -59,27 +57,16 @@ public class FusionTableService {
 	}
 
 	private void execSql(String command, final AsyncCallback<String[]> callback) {
-		RequestBuilder rb;
-		try {
-			rb = new RequestBuilder(RequestBuilder.GET,
+		HttpRequest request = new HttpRequest(HttpRequest.GET,
 					"https://www.google.com/fusiontables/api/query?sql="
-							+ URLEncoder.encode(command, "utf-8"));
-			rb.setHeader("Authorization", "GoogleLogin auth=" + authToken);	
-			rb.sendRequest(null, new RequestCallback() {
-				public void onResponseReceived(Request request,
-						com.google.gwt.http.client.Response response) {
-					System.out.println("SQL result: " + response.getText());
-					callback.onSuccess(response.getText().split("\n"));
-				}
-				
-				public void onError(Request request, Throwable exception) {
-					callback.onFailure(exception);
-				}
-			});
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	
+							+ Util.urlEncode(command));
+		request.setHeader("Authorization", "GoogleLogin auth=" + authToken);	
+		request.send(new ChainedCallback<HttpResponse>(callback) {
+			public void onSuccess(HttpResponse response) {
+				System.out.println("SQL result: " + response.getData());
+				callback.onSuccess(response.getData().split("\n"));
+			}
+		});
 	}
 
 	public PreparedQueryAsync prepareQuery(Query query) {
