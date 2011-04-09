@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module rename-to='infusion'>
+
+  <!-- Specify the paths for translatable code                    -->
+  <source path='datastore'/>
+  <source path='util'/>
+  
+  <super-source path='emul' />   
+</module>
