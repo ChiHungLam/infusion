@@ -4,24 +4,24 @@ import java.util.TreeMap;
 
 public class Entity {
 
-	Key key;
-	TreeMap<String, Object> properties = new TreeMap<String, Object>();
+  Key key;
+  TreeMap<String, Object> properties = new TreeMap<String, Object>();
 
-	public Entity(String tableId) {
-		key = new Key();
-		key.kind = tableId;
-	}
+  public Entity(String tableId) {
+    key = new Key();
+    key.kind = tableId;
+  }
 
-	public Entity(Key key) {
-		this.key = key;
-	}
+  Entity(Key key) {
+    this.key = key;
+  }
 
-	public String toString() {
-		return "" + key + ": " + properties;
-	}
+  public String toString() {
+    return "" + key + ": " + properties;
+  }
 
-	public void setProperty(String name, Object value) {
-		properties.put(name, value);
-	}
+  public void setProperty(String name, Object value) {
+    properties.put(name, value);
+  }
 
 }
