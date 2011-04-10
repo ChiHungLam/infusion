@@ -8,13 +8,17 @@ import com.google.code.infusion.util.AsyncCallback;
 import com.google.code.infusion.util.ClientLogin;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
@@ -81,6 +85,10 @@ public class InfusionGwtDemo implements EntryPoint {
 		mainPanel.add(loginPanel);
 	}
 	
+	static native String loadFile(NativeEvent event) /*-{
+		
+	}-*/;
+	
 	void authenticationObtained(String authtoken) {
 		this.service = new FusionTableService(authtoken);
 		service.showTables(new AsyncCallback<List<TableInfo>>() {
@@ -93,6 +101,17 @@ public class InfusionGwtDemo implements EntryPoint {
 				for (TableInfo table : result) {
 					tableListPanel.add(new Label(table.getName()));
 				}
+				
+				FileUpload upload = new FileUpload();
+				tableListPanel.add(upload);
+				upload.addChangeHandler(new ChangeHandler() {
+
+					public void onChange(ChangeEvent event) {
+						String content = loadFile(event.getNativeEvent());
+						Window.alert(content);
+					}
+					
+				});
 			}
 		});
 		
