@@ -1,136 +1,68 @@
 package com.google.code.infusion.importer;
 
-import java.io.IOException;
-import java.io.Reader;
-
 /**
- * @author Stefan Haustein
- * 
- * Similar to PushbackReader, but the other way around: it is possible
- * to "peek" ahead in the stream without consuming characters. Performs
- * buffering because a buffer is needed anyway.
+ * Wrapper around a string that keeps a position and some helper methods that
+ * simplify parsing.
  */
 
-public class LookAheadReader extends Reader {
+public class LookAheadReader {
 
-	char[] buf = new char[Runtime.getRuntime().freeMemory() > 1000000 ? 16384
-			: 128];
+  String content;
+  int pos;
 
-	int bufPos = 0;
-	int bufValid = 0;
-	Reader reader;
+  public LookAheadReader(String content) {
+    this.content = content;
+  }
 
-	public LookAheadReader(Reader r) {
-		this.reader = r;
-	}
+  public String readTo(String chars) {
+    StringBuffer buf = new StringBuffer();
 
-	/**
-	 * @see java.io.Reader#read(char[], int, int)
-	 */
-	public int read(char[] cbuf, int off, int len) throws IOException {
+    while (peek(0) != -1 && chars.indexOf((char) peek(0)) == -1) {
+      buf.append((char) read());
+    }
 
-		if (bufValid == 0) {
-			if (peek(0) == -1)
-				return -1;
-		}
+    return buf.toString();
+  }
 
-		if (len > bufValid)
-			len = bufValid;
-		if (len > buf.length - bufPos)
-			len = buf.length - bufPos;
+  public String readTo(char c) {
+    StringBuffer buf = new StringBuffer();
+    while (peek(0) != -1 && peek(0) != c) {
+      buf.append((char) read());
+    }
+    return buf.toString();
+  }
 
-		System.arraycopy(buf, bufPos, cbuf, off, len);
+  public int read() {
+    if (pos >= content.length()) {
+      return -1;
+    }
+    return content.charAt(pos++);
+  }
 
-		bufValid -= len;
-		bufPos = bufPos + len;
-		if (bufPos > buf.length)
-			bufPos -= buf.length;
+  public int peek(int delta) {
+    return pos + delta >= content.length() ? -1 : content.charAt(pos + delta);
+  }
 
-		return len;
-	}
+  public String readLine() {
+    if (peek(0) == -1)
+      return null;
+    String s = readTo("\r\n");
+    if (read() == '\r' && peek(0) == '\n')
+      read();
+    return s;
+  }
 
-	public String readTo(String chars) throws IOException {
+  public String readWhile(String chars) {
+    StringBuffer buf = new StringBuffer();
+    while (peek(0) != -1 && chars.indexOf((char) peek(0)) != -1) {
+      buf.append((char) read());
+    }
+    return buf.toString();
+  }
 
-		StringBuffer buf = new StringBuffer();
-
-		while (peek(0) != -1 && chars.indexOf((char) peek(0)) == -1) {
-			buf.append((char) read());
-		}
-
-		return buf.toString();
-	}
-
-	public String readTo(char c) throws IOException {
-		StringBuffer buf = new StringBuffer();
-
-		while (peek(0) != -1 && peek(0) != c) {
-			buf.append((char) read());
-		}
-
-		return buf.toString();
-	}
-
-	/**
-	 * @see java.io.Reader#close()
-	 */
-	public void close() throws IOException {
-		reader.close();
-	}
-
-	public int read() throws IOException {
-		int result = peek(0);
-
-		if (result != -1) {
-			if (++bufPos == buf.length)
-				bufPos = 0;
-			bufValid--;
-		}
-
-		return result;
-	}
-
-	public int peek(int delta) throws IOException {
-		if (delta > 127)
-			throw new RuntimeException("peek > 127 not supported!");
-
-		while (delta >= bufValid) {
-			int startPos = (bufPos + bufValid) % buf.length;
-			int count = Math.min(buf.length - startPos, buf.length - bufValid);
-
-			count = reader.read(buf, startPos, count);
-
-			if (count == -1)
-				return -1;
-
-			bufValid += count;
-		}
-		return buf[bufPos + delta % buf.length];
-	}
-
-	public String readLine() throws IOException {
-		if (peek(0) == -1)
-			return null;
-		String s = readTo("\r\n");
-		if (read() == '\r' && peek(0) == '\n')
-			read();
-		return s;
-	}
-
-	public String readWhile(String chars) throws IOException {
-
-		StringBuffer buf = new StringBuffer();
-
-		while (peek(0) != -1 && chars.indexOf((char) peek(0)) != -1) {
-			buf.append((char) read());
-		}
-
-		return buf.toString();
-
-	}
-
-	public void skip(String chars) throws IOException {
-		while (peek(0) != -1 && chars.indexOf((char) peek(0)) != -1) {
-			read();
-		}
-	}
+  public void skip(String chars) {
+    while (peek(0) != -1 && chars.indexOf((char) peek(0)) != -1) {
+      read();
+    }
+  }
 }
