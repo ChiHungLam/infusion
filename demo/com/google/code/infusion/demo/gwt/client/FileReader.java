@@ -8,6 +8,9 @@ public class FileReader extends JavaScriptObject {
   public static final int LOADING = 1;
   public static final int DONE = 2;
   
+  protected FileReader() {
+  }
+  
   public native final static FileReader create() /*-{
     return new FileReader();
   }-*/;

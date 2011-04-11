@@ -257,9 +257,19 @@ public class FusionTableService {
       this.query = query;
     }
 
-    public void asList(final AsyncCallback<List<Entity>> callback) {
-      getSql("SELECT * FROM " + query.toString(),
-          new ChainedCallback<String[]>(callback) {
+    public void asList(FetchOptions fetchOptions, final AsyncCallback<List<Entity>> callback) {
+      StringBuilder sb = new StringBuilder("SELECT * ");
+      sb.append(query.toString());
+      if (fetchOptions.offset > 0) {
+        sb.append(" OFFSET ");
+        sb.append(fetchOptions.offset);
+      }
+      if (fetchOptions.limit < Integer.MAX_VALUE) {
+        sb.append(" LIMIT ");
+        sb.append(fetchOptions.limit);
+      }
+      
+      getSql(sb.toString(), new ChainedCallback<String[]>(callback) {
             public void onSuccess(String[] result) {
               String[] names = null;
               ArrayList<Entity> entities = new ArrayList<Entity>();
