@@ -19,7 +19,7 @@ public class ProxyServlet extends HttpServlet{
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		String forwardTo = request.getHeader("X-Forward-To");
-		// System.out.println("URL: " + forwardTo);
+		System.out.println("URL: " + forwardTo);
 		HttpURLConnection connection = (HttpURLConnection) new URL(forwardTo).openConnection();
 		connection.setDoOutput(true);	
 		connection.setRequestMethod(request.getMethod());
