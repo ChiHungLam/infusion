@@ -1,6 +1,8 @@
 package com.google.code.infusion.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -46,7 +48,20 @@ public class HttpResponse {
       data = sb.toString();
       callback.onSuccess(this);
     } catch (IOException e) {
-      callback.onFailure(e);
+      StringBuilder sb = new StringBuilder();
+      try {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getErrorStream(), "utf-8"));
+        while(true) {
+          String line = reader.readLine();
+          if (line == null) {
+            break;
+          }
+          sb.append(line);
+          sb.append('\n');
+        }
+      } catch(IOException e2) {  
+      }
+      callback.onFailure(sb.length() == 0 ? e : new IOException(e.getMessage() + " / " + sb.toString()));
     }
   }
 

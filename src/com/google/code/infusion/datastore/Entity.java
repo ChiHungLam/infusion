@@ -1,5 +1,6 @@
 package com.google.code.infusion.datastore;
 
+import java.util.Map;
 import java.util.TreeMap;
 
 public class Entity {
@@ -8,7 +9,7 @@ public class Entity {
   TreeMap<String, Object> properties = new TreeMap<String, Object>();
 
   public Entity(String tableId) {
-    key = new Key();
+    this(new Key());
     key.kind = tableId;
   }
 
@@ -22,6 +23,14 @@ public class Entity {
 
   public void setProperty(String name, Object value) {
     properties.put(name, value);
+  }
+
+  public Key getKey() {
+    return key;
+  }
+
+  public Map<String, Object> getProperties() {
+    return properties; // Is a defensive copy or immutability needed here?
   }
 
 }
