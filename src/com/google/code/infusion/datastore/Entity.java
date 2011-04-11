@@ -33,4 +33,8 @@ public class Entity {
     return properties; // Is a defensive copy or immutability needed here?
   }
 
+  public Object getProperty(String name) {
+    return properties.get(name);
+  }
+
 }
