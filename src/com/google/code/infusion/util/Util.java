@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 public class Util {
 
-	public static String quote(String value) {
-		StringBuilder sb = new StringBuilder("\"");
+	public static String singleQuote(String value) {
+		StringBuilder sb = new StringBuilder("\'");
 		for (int i = 0; i < value.length(); i++) {
 			char c = value.charAt(i);
 			switch (c) {
@@ -17,16 +17,45 @@ public class Util {
 			case '\r':
 				sb.append("\\r");
 				break;
-			case '"':
-				sb.append("\\\"");
+			case '\'':
+				sb.append("\\\'");
 				break;
+            case '\\':
+              sb.append("\\\\");
+              break;
 			default:
 				sb.append(c);
 			}
 		}
-		sb.append('"');
+		sb.append('\'');
 		return sb.toString();
 	}
+
+	
+	   public static String doubleQuote(String value) {
+	        StringBuilder sb = new StringBuilder("\"");
+	        for (int i = 0; i < value.length(); i++) {
+	            char c = value.charAt(i);
+	            switch (c) {
+	            case '\n':
+	                sb.append("\\n");
+	                break;
+	            case '\r':
+	                sb.append("\\r");
+	                break;
+	            case '"':
+	                sb.append("\\\"");
+	                break;
+	            case '\\':
+	              sb.append("\\\\");
+	              break;
+	            default:
+	                sb.append(c);
+	            }
+	        }
+	        sb.append('"');
+	        return sb.toString();
+	    }
 
 	public static String[] parseCsv(String s) {
 		ArrayList<String> parts = new ArrayList<String>();

@@ -6,12 +6,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import com.google.code.infusion.datastore.ColumnInfo;
+import com.google.code.infusion.datastore.ColumnType;
+import com.google.code.infusion.datastore.Entity;
 import com.google.code.infusion.datastore.FusionTableService;
+import com.google.code.infusion.datastore.Key;
 import com.google.code.infusion.datastore.TableInfo;
 import com.google.code.infusion.importer.BibtexParser;
 import com.google.code.infusion.importer.CsvParser;
@@ -71,6 +76,8 @@ public class SimpleDemo {
           describe(cmd.substring(9).trim());
         } else if (cmd.startsWith("import ")) {
           importFile(cmd.substring(7));
+        } else if (cmd.startsWith("drop table ")) {
+          dropTable(cmd.substring(11));
         } else {
           System.out.println("Unrecognized command or missing parameter: " + cmd);
           showPrompt();
@@ -80,6 +87,22 @@ public class SimpleDemo {
       }
     }
     System.out.println("Good bye!");
+  }
+
+  private static void dropTable(String tableId) {
+    service.dropTable(tableId, new AsyncCallback<Void>() {
+      @Override
+      public void onSuccess(Void result) {
+        System.out.println("Table dropped");
+        showPrompt();
+      }
+
+      @Override
+      public void onFailure(Throwable error) {
+        showError(error);
+      }
+      
+    });
   }
 
   private static void importFile(String fileName) throws IOException {
@@ -103,18 +126,65 @@ public class SimpleDemo {
       parser = new CsvParser(data, true);
     }
     
-    while (parser.hasNext()) {
-      System.out.println(parser.next());
+    String name = fileName;
+    int cut = name.lastIndexOf('/');
+    if (cut != -1) {
+      name = name.substring(cut + 1);
+    }
+    cut = name.lastIndexOf('.');
+    if (cut != -1) {
+      name = name.substring(0, cut);
     }
     
+    HashSet<String> fields = new HashSet<String>();
+    final ArrayList<Map<String,String>> entries = new ArrayList<Map<String,String>>();
+    while (parser.hasNext()) {
+      Map<String,String> entry = parser.next();
+      fields.addAll(entry.keySet());
+      entries.add(entry);
+    }
+    
+    ArrayList<ColumnInfo> columns = new ArrayList<ColumnInfo>();
+    for (String field: fields) {
+      columns.add(new ColumnInfo(field, ColumnType.STRING));
+    }
+    
+    service.createTable(name, columns, new AsyncCallback<String>() {
+      public void onSuccess(String tableId) {
+        ArrayList<Entity> entities = new ArrayList<Entity>();
+        for (Map<String,String> map: entries) {
+          Entity entity = new Entity(tableId);
+          for (Map.Entry<String, String> e : map.entrySet()) {
+            entity.setProperty(e.getKey(), e.getValue());
+          }
+          entities.add(entity);
+        }
+        service.put(entities, new AsyncCallback<List<Key>>() {
+
+          @Override
+          public void onSuccess(List<Key> result) {
+            System.out.println("" + result.size() + " entities updated / inserted.");
+            showPrompt();
+          }
+
+          @Override
+          public void onFailure(Throwable error) {
+            showError(error);
+          }
+        });
+      }
+      public void onFailure(Throwable error) {
+        showError(error);
+      }});
   }
 
   private static void showHelp() {
     System.out.println();
-    System.out.println("describe <table id>: Show table structure");
-    System.out.println("help:                Show this help screen");
-    System.out.println("exit:                Quit FT demo");
-    System.out.println("show tables:         List available tables");
+    System.out.println("describe <table id>:   Show table structure");
+    System.out.println("drop table <table id>: Drop (delete) the table");
+    System.out.println("help:                  Show this help screen");
+    System.out.println("exit:                  Quit FT demo");
+    System.out.println("show tables:           List available tables");
     showPrompt();
   }
 

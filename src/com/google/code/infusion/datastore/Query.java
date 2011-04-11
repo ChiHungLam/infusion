@@ -108,7 +108,7 @@ public class Query {
 					+ " "
 					+ operator
 					+ " "
-					+ ((value instanceof String) ? Util.quote((String) value)
+					+ ((value instanceof String) ? Util.singleQuote((String) value)
 							: "" + value);
 		}
 
