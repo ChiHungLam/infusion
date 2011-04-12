@@ -8,7 +8,7 @@
    <!-- Servlets -->
   <servlet>
     <servlet-name>proxyServlet</servlet-name>
-    <servlet-class>com.google.code.infusion.demo.gwt.server.ProxyServlet</servlet-class>
+    <servlet-class>com.google.code.infusion.gwt.server.ProxyServlet</servlet-class>
   </servlet>
   
   <servlet-mapping>

@@ -2,8 +2,9 @@
 <module rename-to='infusion'>
 
   <!-- Specify the paths for translatable code                    -->
-  <source path='datastore'/>
+  <source path='gwt/client'/>
   <source path='util'/>
+  <source path='datastore'/>
   
   <super-source path='emul' />   
 </module>

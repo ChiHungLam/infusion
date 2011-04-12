@@ -1,4 +1,4 @@
-package com.google.code.infusion.demo.gwt.client;
+package com.google.code.infusion.gwt.client;
 
 import java.util.List;
 
@@ -12,12 +12,12 @@ import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 
-public class FusionTableProvider extends AbstractDataProvider<Entity> {
+public class FusionTableDataProvider extends AbstractDataProvider<Entity> {
 
   FusionTableService service;
   Query query;
   
-  FusionTableProvider(FusionTableService service, Query query) {
+  public FusionTableDataProvider(FusionTableService service, Query query) {
     this.service = service;
     this.query = query;
   }

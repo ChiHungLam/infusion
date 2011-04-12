@@ -7,6 +7,7 @@ import com.google.code.infusion.datastore.Entity;
 import com.google.code.infusion.datastore.FusionTableService;
 import com.google.code.infusion.datastore.Query;
 import com.google.code.infusion.datastore.TableInfo;
+import com.google.code.infusion.gwt.client.FusionTableDataProvider;
 import com.google.code.infusion.util.AsyncCallback;
 import com.google.code.infusion.util.ClientLogin;
 import com.google.gwt.core.client.EntryPoint;
@@ -175,7 +176,7 @@ public class InfusionGwtDemo implements EntryPoint {
       
     }
     
-    new FusionTableProvider(service, new Query(table.getId())).addDataDisplay(cellTable);
+    new FusionTableDataProvider(service, new Query(table.getId())).addDataDisplay(cellTable);
     
   }
   
