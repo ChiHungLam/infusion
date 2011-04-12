@@ -1,4 +1,4 @@
-package com.google.code.infusion.demo.gwt.server;
+package com.google.code.infusion.gwt.server;
 
 import java.io.IOException;
 import java.io.InputStream;
