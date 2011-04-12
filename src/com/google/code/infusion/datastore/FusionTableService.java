@@ -136,7 +136,21 @@ public class FusionTableService {
         List<ColumnInfo> table = new ArrayList<ColumnInfo>();
         for (int i = 1; i < rows.length; i++) {
           String[] parts = Util.parseCsv(rows[i]);
-          table.add(new ColumnInfo(parts[1], ColumnType.STRING));
+          ColumnType<?> type;
+          String typeName = parts[2].toLowerCase();
+          if ("string".equals(typeName)) {
+            type = ColumnType.STRING;
+          } else if ("datetime".equals(typeName)) {
+            type = ColumnType.DATETIME;
+          } else if ("number".equals(typeName)) {
+            type = ColumnType.NUMBER;
+          } else if ("location".equals(typeName)) {
+            type = ColumnType.LOCATION;
+          } else {
+            onFailure(new RuntimeException("Unrecognized column type: " + typeName));
+            break;
+          }
+          table.add(new ColumnInfo(parts[1], type));
         }
         tables.put(tableId, table);
         callback.onSuccess(table);
@@ -192,7 +206,7 @@ public class FusionTableService {
       ColumnInfo col = columns.get(i);
       sb.append(Util.singleQuote(col.getName()));
       sb.append(": ");
-      sb.append(col.getType().getBaseType());
+      sb.append(col.getType().getName());
     }
     return sb.toString();
   }
