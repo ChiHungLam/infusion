@@ -210,6 +210,8 @@ public class FusionTableService {
     }
     return sb.toString();
   }
+  
+  
   private static String buildInsertStatement(List<Entity> entities) {
     StringBuilder sb = new StringBuilder();
     for (Entity entity : entities) {
