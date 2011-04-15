@@ -273,8 +273,28 @@ public class FusionTableService {
       this.query = query;
     }
 
-    public void asList(FetchOptions fetchOptions, final AsyncCallback<List<Entity>> callback) {
-      StringBuilder sb = new StringBuilder("SELECT * ");
+    public void asList(final FetchOptions fetchOptions, final AsyncCallback<List<Entity>> callback) {
+      List<ColumnInfo> columns = tables.get(query.getKind());
+      if (columns != null) {
+        asList(fetchOptions, columns, callback);
+      } else {
+        describe(query.getKind(), new ChainedCallback<List<ColumnInfo>>(callback) {
+          @Override
+          public void onSuccess(List<ColumnInfo> result) {
+            asList(fetchOptions, result, callback);
+          }
+        });
+      }
+    }
+    
+    
+    public void asList(FetchOptions fetchOptions, final List<ColumnInfo> columns, final AsyncCallback<List<Entity>> callback) {
+      StringBuilder sb = new StringBuilder("SELECT colnr");
+      for (int i = 0; i < columns.size(); i++) {
+        sb.append(',');
+        sb.append(Util.singleQuote(columns.get(i).getName()));
+      }
+      sb.append(' ');
       sb.append(query.toString());
       if (fetchOptions.offset > 0) {
         sb.append(" OFFSET ");
@@ -286,20 +306,18 @@ public class FusionTableService {
       }
       
       getSql(sb.toString(), new ChainedCallback<String[]>(callback) {
-            public void onSuccess(String[] result) {
-              String[] names = null;
+          public void onSuccess(String[] result) {
               ArrayList<Entity> entities = new ArrayList<Entity>();
-              for (String line : result) {
-                String[] parts = Util.parseCsv(line);
-                if (names == null) {
-                  names = parts;
-                } else {
-                  Entity entity = new Entity(query.getKind());
-                  for (int i = 0; i < parts.length; i++) {
-                    entity.setProperty(names[i], parts[i]);
-                  }
-                  entities.add(entity);
+              for (int i = 1; i < result.length; i++) {
+                String[] parts = Util.parseCsv(result[i]);
+                Key key = new Key();
+                key.kind = query.getKind();
+                key.name = parts[0];
+                Entity entity = new Entity(key);
+                for (int j = 0; j < parts.length; j++) {
+                  entity.setProperty(columns.get(j).getName(), parts[j]);
                 }
+                entities.add(entity);
               }
               callback.onSuccess(entities);
             }
