@@ -35,7 +35,86 @@ public class FusionTableService {
 
   }
 
+  private void describeAsMap(String tableId, final AsyncCallback<Map<String,ColumnType<?>>> callback) {
+    describe(tableId, new ChainedCallback<List<ColumnInfo>>(callback) {
+      @Override
+      public void onSuccess(List<ColumnInfo> result) {
+        Map<String,ColumnType<?>> map = new HashMap<String,ColumnType<?>>();
+        for (ColumnInfo c: result) {
+          map.put(c.getName(), c.getType());
+        }
+        callback.onSuccess(map);
+      }
+    });
+  }
+  
+  
+  private void postInsertStatement(final List<Entity> insert, final AsyncCallback<String[]> callback) {
+    describeAsMap(insert.get(0).getKey().getKind(), new ChainedCallback<Map<String,ColumnType<?>>>(callback) {
+      @Override
+      public void onSuccess(Map<String, ColumnType<?>> columns) {
+        StringBuilder sb = new StringBuilder();
+        for (Entity entity : insert) {
+          sb.append("INSERT INTO ");
+          sb.append(Util.doubleQuote(entity.getKey().getKind()));
+          sb.append(" (");
+          StringBuilder values = new StringBuilder();
+          for (Map.Entry<String, Object> entry : entity.getProperties().entrySet()) {
+            if (values.length() != 0) {
+              sb.append(", ");
+              values.append(", ");
+            }
+            sb.append(Util.singleQuote(entry.getKey()));
+            ColumnType type = columns.get(entry.getKey());
+            if (type == null) {
+              callback.onFailure(new RuntimeException("Unknown field '" + entry.getKey() + "'"));
+              return;
+            }
+            values.append(Util.singleQuote(type.toString(entry.getValue())));
+          }
+          sb.append(") VALUES (");
+          sb.append(values.toString());
+          sb.append(")");
+          if (insert.size() > 1) {
+            sb.append(";\n");
+          }
+        }
+        postSql(sb.toString(), callback); 
+      }
+    });
+  }
 
+
+  private void postUpdateStatement(final Entity entity, final AsyncCallback<String[]> callback) {
+    describeAsMap(entity.getKey().getKind(), new ChainedCallback<Map<String,ColumnType<?>>>(callback) {
+      @Override
+      public void onSuccess(Map<String, ColumnType<?>> columns) {
+        StringBuilder sb = new StringBuilder("UPDATE ");
+        sb.append(entity.getKey().getKind());
+        sb.append(" SET ");
+        boolean first = true;
+        for(Map.Entry<String,Object> entry: entity.getProperties().entrySet()) {
+          if (first) {
+            first = false;
+          } else {
+            sb.append(", ");
+          } 
+          sb.append(Util.singleQuote(entry.getKey()));
+          sb.append(" = ");
+          ColumnType type = columns.get(entry.getKey());
+          if (type == null) {
+            callback.onFailure(new RuntimeException("Unknown field '" + entry.getKey() + "'"));
+            return;
+          }
+          sb.append(Util.singleQuote(type.toString(entry.getValue())));
+        }
+        sb.append(" WHERE ROWID = " + Util.singleQuote(entity.getKey().getName()));
+        postSql(sb.toString(), callback);
+      }
+    });
+  }
+
+  
   public void put(final Iterable<Entity> entities,
       final AsyncCallback<List<Key>> callback) {
     List<Entity> updates = new ArrayList<Entity>();
@@ -64,7 +143,7 @@ public class FusionTableService {
       if (putStatus.error) {
         break;
       }
-      postSql(buildUpdateStatement(entity), new AsyncCallback<String[]>() {
+      postUpdateStatement(entity, new AsyncCallback<String[]>() {
         @Override
         public void onSuccess(String[] result) {
           putStatus.pending--;
@@ -86,7 +165,7 @@ public class FusionTableService {
       if (putStatus.error) {
         break;
       }
-      postSql(buildInsertStatement(insert), new AsyncCallback<String[]>() {
+      postInsertStatement(insert, new AsyncCallback<String[]>() {
         @Override
         public void onSuccess(String[] result) {
           for (int i = 0; i < insert.size(); i++) {
@@ -211,51 +290,7 @@ public class FusionTableService {
     return sb.toString();
   }
   
-  
-  private static String buildInsertStatement(List<Entity> entities) {
-    StringBuilder sb = new StringBuilder();
-    for (Entity entity : entities) {
-      sb.append("INSERT INTO ");
-      sb.append(Util.doubleQuote(entity.getKey().getKind()));
-      sb.append(" (");
-      StringBuilder values = new StringBuilder();
-      for (Map.Entry<String, Object> entry : entity.getProperties().entrySet()) {
-        if (values.length() != 0) {
-          sb.append(", ");
-          values.append(", ");
-        }
-        sb.append(Util.singleQuote(entry.getKey()));
-        values.append(Util.singleQuote("" + entry.getValue()));
-      }
-      sb.append(") VALUES (");
-      sb.append(values.toString());
-      sb.append(")");
-      if (entities.size() > 1) {
-        sb.append(";\n");
-      }
-    }
-    return sb.toString();
-  }
-
-  private static String buildUpdateStatement(Entity entity) {
-    StringBuilder sb = new StringBuilder("UPDATE ");
-    sb.append(entity.getKey().getKind());
-    sb.append(" SET ");
-    boolean first = true;
-    for(Map.Entry<String,Object> entry: entity.getProperties().entrySet()) {
-      if (first) {
-        first = false;
-      } else {
-        sb.append(", ");
-      } 
-      sb.append(Util.singleQuote(entry.getKey()));
-      sb.append(" = ");
-      sb.append(Util.singleQuote("" + entry.getValue()));
-    }
-    sb.append(" WHERE ROWID = " + Util.singleQuote(entity.getKey().getName()));
-    return sb.toString();
-  }
-  
+    
   
   private static List<Key> buildKeyList(Iterable<Entity> entities) {
     ArrayList<Key> keys = new ArrayList<Key>();
@@ -274,22 +309,17 @@ public class FusionTableService {
     }
 
     public void asList(final FetchOptions fetchOptions, final AsyncCallback<List<Entity>> callback) {
-      List<ColumnInfo> columns = tables.get(query.getKind());
-      if (columns != null) {
-        asList(fetchOptions, columns, callback);
-      } else {
-        describe(query.getKind(), new ChainedCallback<List<ColumnInfo>>(callback) {
-          @Override
-          public void onSuccess(List<ColumnInfo> result) {
-            asList(fetchOptions, result, callback);
-          }
-        });
-      }
+      describe(query.getKind(), new ChainedCallback<List<ColumnInfo>>(callback) {
+        @Override
+        public void onSuccess(List<ColumnInfo> result) {
+          asList(fetchOptions, result, callback);
+        }
+      });
     }
     
     
     public void asList(FetchOptions fetchOptions, final List<ColumnInfo> columns, final AsyncCallback<List<Entity>> callback) {
-      StringBuilder sb = new StringBuilder("SELECT colnr");
+      StringBuilder sb = new StringBuilder("SELECT rowid");
       for (int i = 0; i < columns.size(); i++) {
         sb.append(',');
         sb.append(Util.singleQuote(columns.get(i).getName()));
@@ -315,7 +345,8 @@ public class FusionTableService {
                 key.name = parts[0];
                 Entity entity = new Entity(key);
                 for (int j = 0; j < parts.length; j++) {
-                  entity.setProperty(columns.get(j).getName(), parts[j]);
+                  entity.setProperty(columns.get(j).getName(), 
+                      columns.get(j).getType().parse(parts[j]));
                 }
                 entities.add(entity);
               }
