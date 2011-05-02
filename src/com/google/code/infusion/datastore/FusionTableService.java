@@ -344,9 +344,9 @@ public class FusionTableService {
                 key.kind = query.getKind();
                 key.name = parts[0];
                 Entity entity = new Entity(key);
-                for (int j = 0; j < parts.length; j++) {
+                for (int j = 0; j < columns.size(); j++) {
                   entity.setProperty(columns.get(j).getName(), 
-                      columns.get(j).getType().parse(parts[j]));
+                      columns.get(j).getType().parse(parts[j + 1]));
                 }
                 entities.add(entity);
               }

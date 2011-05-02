@@ -23,10 +23,10 @@ public interface ColumnType<T> {
       }
     };
   
-  static final ColumnType<Double> LOCATION = 
-    new AbstractColumnType<Double>("LOCATION") {
-    public Double parse(String s) {
-      return Double.parseDouble(s.trim());
+  static final ColumnType<Location> LOCATION = 
+    new AbstractColumnType<Location>("LOCATION") {
+    public Location parse(String s) {
+      return new Location(s.trim());
     }
   };
     
