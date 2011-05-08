@@ -17,14 +17,15 @@ import com.google.code.infusion.util.ChainedCallback;
 
 public class ColumnStats implements Comparable<ColumnStats>{
 
-  String name;
+  final String name;
   final int rowCount;
   int maxLength;
   int totalLength;
   int valueCount;
   Set<Object> values = new HashSet<Object>();
 
-  private ColumnStats(int count) {
+  private ColumnStats(String name, int count) {
+    this.name = name;
     this.rowCount = count;
   }
   
@@ -39,7 +40,7 @@ public class ColumnStats implements Comparable<ColumnStats>{
           for (Entry<String, Object> e : entity.getProperties().entrySet()) {
             ColumnStats stats = map.get(e.getKey());
             if (stats == null) {
-              stats = new ColumnStats(result.size());
+              stats = new ColumnStats(e.getKey(), result.size());
               map.put(e.getKey(), stats);
             }
             stats.add(e.getValue());
@@ -58,8 +59,16 @@ public class ColumnStats implements Comparable<ColumnStats>{
 
 
   private void calc() {
-    valueCount = values.size();
+    for (Object value: values) {
+      int len = value.toString().length();
+      if (len > maxLength) {
+        maxLength = len;
+      }
+      totalLength += len;
+    }
     
+    valueCount = values.size();
+    values = null;
   }
 
 
@@ -70,8 +79,13 @@ public class ColumnStats implements Comparable<ColumnStats>{
 
   @Override
   public int compareTo(ColumnStats stats) {
-    int delta = this.valueCount - stats.valueCount;
+    int delta = stats.valueCount - this.valueCount;
     return delta == 0 ? this.maxLength - stats.maxLength : delta;
+  }
+
+
+  public String getName() {
+    return name;
   }
   
 }
