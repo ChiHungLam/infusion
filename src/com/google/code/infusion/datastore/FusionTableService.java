@@ -14,7 +14,7 @@ import com.google.code.infusion.util.Util;
 public class FusionTableService {
 
   private String authToken;
-  private HashMap<String, List<ColumnInfo>> tables = new HashMap<String, List<ColumnInfo>>();
+  private HashMap<String, TableDescription> tables = new HashMap<String, TableDescription>();
 
   public FusionTableService(String authToken) {
     this.authToken = authToken;
@@ -35,24 +35,11 @@ public class FusionTableService {
 
   }
 
-  private void describeAsMap(String tableId, final AsyncCallback<Map<String,ColumnType<?>>> callback) {
-    describe(tableId, new ChainedCallback<List<ColumnInfo>>(callback) {
-      @Override
-      public void onSuccess(List<ColumnInfo> result) {
-        Map<String,ColumnType<?>> map = new HashMap<String,ColumnType<?>>();
-        for (ColumnInfo c: result) {
-          map.put(c.getName(), c.getType());
-        }
-        callback.onSuccess(map);
-      }
-    });
-  }
-  
-  
+
   private void postInsertStatement(final List<Entity> insert, final AsyncCallback<String[]> callback) {
-    describeAsMap(insert.get(0).getKey().getKind(), new ChainedCallback<Map<String,ColumnType<?>>>(callback) {
+    describe(insert.get(0).getKey().getKind(), new ChainedCallback<TableDescription>(callback) {
       @Override
-      public void onSuccess(Map<String, ColumnType<?>> columns) {
+      public void onSuccess(TableDescription table) {
         StringBuilder sb = new StringBuilder();
         for (Entity entity : insert) {
           sb.append("INSERT INTO ");
@@ -65,7 +52,7 @@ public class FusionTableService {
               values.append(", ");
             }
             sb.append(Util.singleQuote(entry.getKey()));
-            ColumnType type = columns.get(entry.getKey());
+            ColumnType type = table.get(entry.getKey()).getType();
             if (type == null) {
               callback.onFailure(new RuntimeException("Unknown field '" + entry.getKey() + "'"));
               return;
@@ -86,9 +73,9 @@ public class FusionTableService {
 
 
   private void postUpdateStatement(final Entity entity, final AsyncCallback<String[]> callback) {
-    describeAsMap(entity.getKey().getKind(), new ChainedCallback<Map<String,ColumnType<?>>>(callback) {
+    describe(entity.getKey().getKind(), new ChainedCallback<TableDescription>(callback) {
       @Override
-      public void onSuccess(Map<String, ColumnType<?>> columns) {
+      public void onSuccess(TableDescription columns) {
         StringBuilder sb = new StringBuilder("UPDATE ");
         sb.append(entity.getKey().getKind());
         sb.append(" SET ");
@@ -101,7 +88,7 @@ public class FusionTableService {
           } 
           sb.append(Util.singleQuote(entry.getKey()));
           sb.append(" = ");
-          ColumnType type = columns.get(entry.getKey());
+          ColumnType type = columns.get(entry.getKey()).getType();
           if (type == null) {
             callback.onFailure(new RuntimeException("Unknown field '" + entry.getKey() + "'"));
             return;
@@ -194,8 +181,18 @@ public class FusionTableService {
       public void onSuccess(String[] rows) {
         ArrayList<TableInfo> result = new ArrayList<TableInfo>();
         for (int i = 1; i < rows.length; i++) {
-          String[] parts = Util.parseCsv(rows[i]);
-          result.add(new TableInfo(parts[0], parts[1]));
+          final String[] parts = Util.parseCsv(rows[i]);
+          result.add(new TableInfo() {
+            @Override
+            public String getName() {
+              return parts[1];
+            }
+
+            @Override
+            public String getId() {
+              return parts[0];
+            }
+          });
         }
         callback.onSuccess(result);
       }
@@ -203,8 +200,8 @@ public class FusionTableService {
   }
 
   public void describe(final String tableId,
-      final AsyncCallback<List<ColumnInfo>> callback) {
-    List<ColumnInfo> table = tables.get(tableId);
+      final AsyncCallback<TableDescription> callback) {
+    TableDescription table = tables.get(tableId);
     if (table != null) {
       callback.onSuccess(table);
       return;
@@ -212,7 +209,7 @@ public class FusionTableService {
 
     getSql("DESCRIBE " + Util.doubleQuote(tableId), new ChainedCallback<String[]>(callback) {
       public void onSuccess(String[] rows) {
-        List<ColumnInfo> table = new ArrayList<ColumnInfo>();
+        TableDescription table = new TableDescription(tableId);
         for (int i = 1; i < rows.length; i++) {
           String[] parts = Util.parseCsv(rows[i]);
           ColumnType<?> type;
@@ -309,16 +306,17 @@ public class FusionTableService {
     }
 
     public void asList(final FetchOptions fetchOptions, final AsyncCallback<List<Entity>> callback) {
-      describe(query.getKind(), new ChainedCallback<List<ColumnInfo>>(callback) {
+      describe(query.getKind(), new ChainedCallback<TableDescription>(callback) {
         @Override
-        public void onSuccess(List<ColumnInfo> result) {
-          asList(fetchOptions, result, callback);
+        public void onSuccess(TableDescription result) {
+          asList(fetchOptions, result.getColumnList(), callback);
         }
       });
     }
-    
-    
-    public void asList(FetchOptions fetchOptions, final List<ColumnInfo> columns, final AsyncCallback<List<Entity>> callback) {
+
+
+    // If this is made public, it should not return Entities that may be incomplete.
+    private void asList(FetchOptions fetchOptions, final List<ColumnInfo> columns, final AsyncCallback<List<Entity>> callback) {
       StringBuilder sb = new StringBuilder("SELECT rowid");
       for (int i = 0; i < columns.size(); i++) {
         sb.append(',');
@@ -345,8 +343,10 @@ public class FusionTableService {
                 key.name = parts[0];
                 Entity entity = new Entity(key);
                 for (int j = 0; j < columns.size(); j++) {
-                  entity.setProperty(columns.get(j).getName(), 
-                      columns.get(j).getType().parse(parts[j + 1]));
+                  if (parts.length > j + 1) {
+                    entity.setProperty(columns.get(j).getName(), 
+                        columns.get(j).getType().parse(parts[j + 1]));
+                  }
                 }
                 entities.add(entity);
               }

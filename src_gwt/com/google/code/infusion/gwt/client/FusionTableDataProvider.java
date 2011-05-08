@@ -36,8 +36,7 @@ public class FusionTableDataProvider extends AbstractDataProvider<Entity> {
       }
 
       public void onFailure(Throwable error) {
-        // TODO Auto-generated method stub
-        
+        error.printStackTrace();
       }
     });
   }

@@ -1,11 +1,13 @@
 package com.google.code.infusion.demo.gwt.client;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.code.infusion.datastore.ColumnInfo;
 import com.google.code.infusion.datastore.Entity;
 import com.google.code.infusion.datastore.FusionTableService;
 import com.google.code.infusion.datastore.Query;
+import com.google.code.infusion.datastore.TableDescription;
 import com.google.code.infusion.datastore.TableInfo;
 import com.google.code.infusion.gwt.client.FusionTableDataProvider;
 import com.google.code.infusion.util.AsyncCallback;
@@ -15,8 +17,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -26,13 +26,9 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -122,11 +118,11 @@ public class InfusionGwtDemo implements EntryPoint {
           anchor.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-              service.describe(table.getId(), new AsyncCallback<List<ColumnInfo>>() {
+              service.describe(table.getId(), new AsyncCallback<TableDescription>() {
 
                 @Override
-                public void onSuccess(List<ColumnInfo> result) {
-                  showTable(table, result);
+                public void onSuccess(TableDescription result) {
+                  selectColumns(table, result);
                 }
 
                 @Override
@@ -150,6 +146,27 @@ public class InfusionGwtDemo implements EntryPoint {
           }
         });
         */
+      }
+    });
+  }
+  
+  
+  private void selectColumns(final TableInfo tableInfo, 
+      final TableDescription tableDescription) {
+
+    ColumnStats.getStats(service, new Query(tableInfo.getId()), 100, new AsyncCallback<List<ColumnStats>>() {
+      @Override
+      public void onSuccess(List<ColumnStats> stats) {
+        ArrayList<ColumnInfo> columns = new ArrayList<ColumnInfo>();
+        for (int i = 0; i < Math.min(stats.size(), 10); i++) {
+          columns.add(tableDescription.get(stats.get(i).getName()));
+        }
+        showTable(tableInfo, columns);
+      }
+
+      @Override
+      public void onFailure(Throwable error) {
+        error.printStackTrace();
       }
     });
   }

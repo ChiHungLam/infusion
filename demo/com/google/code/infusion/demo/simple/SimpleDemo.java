@@ -17,6 +17,7 @@ import com.google.code.infusion.datastore.ColumnType;
 import com.google.code.infusion.datastore.Entity;
 import com.google.code.infusion.datastore.FusionTableService;
 import com.google.code.infusion.datastore.Key;
+import com.google.code.infusion.datastore.TableDescription;
 import com.google.code.infusion.datastore.TableInfo;
 import com.google.code.infusion.importer.BibtexParser;
 import com.google.code.infusion.importer.CsvParser;
@@ -189,12 +190,13 @@ public class SimpleDemo {
   }
 
   private static void describe(String tableId) {
-    service.describe(tableId, new AsyncCallback<List<ColumnInfo>>() {
+    service.describe(tableId, new AsyncCallback<TableDescription>() {
       public void onFailure(Throwable caught) {
         showError(caught);
       }
 
-      public void onSuccess(List<ColumnInfo> result) {
+      @Override
+      public void onSuccess(TableDescription result) {
         System.out.println("Columns:");
         for (ColumnInfo ci : result) {
           System.out.println(ci);
