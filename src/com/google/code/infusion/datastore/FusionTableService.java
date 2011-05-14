@@ -199,6 +199,7 @@ public class FusionTableService {
     });
   }
 
+  
   public void describe(final String tableId,
       final AsyncCallback<TableDescription> callback) {
     TableDescription table = tables.get(tableId);
@@ -206,10 +207,24 @@ public class FusionTableService {
       callback.onSuccess(table);
       return;
     }
+    
+    describe(new TableDescription(tableId), callback);
+  }
 
-    getSql("DESCRIBE " + Util.doubleQuote(tableId), new ChainedCallback<String[]>(callback) {
+  
+  public void describe(final TableDescription table, final AsyncCallback<TableDescription> callback) {
+    TableDescription stored = tables.get(table.getId());
+    if (stored != null) {
+      if (stored != table) {
+        callback.onFailure(new RuntimeException("Table exists with different description"));
+      } else {
+        callback.onSuccess(table);
+      }
+      return;
+    }
+
+    getSql("DESCRIBE " + Util.doubleQuote(table.getId()), new ChainedCallback<String[]>(callback) {
       public void onSuccess(String[] rows) {
-        TableDescription table = new TableDescription(tableId);
         for (int i = 1; i < rows.length; i++) {
           String[] parts = Util.parseCsv(rows[i]);
           ColumnType<?> type;
@@ -228,7 +243,7 @@ public class FusionTableService {
           }
           table.add(new ColumnInfo(parts[1], type));
         }
-        tables.put(tableId, table);
+        tables.put(table.getId(), table);
         callback.onSuccess(table);
       }
     });
