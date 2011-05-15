@@ -10,31 +10,41 @@ public interface ColumnType<T> {
   };
   
   static final ColumnType<String> STRING = 
-    new AbstractColumnType<String>("STRING") {
+    new AbstractColumnType<String>("String") {
       public String parse(String s) {
         return s;
       }
     };
 
   static final ColumnType<Double> NUMBER = 
-    new AbstractColumnType<Double>("NUMBER") {
+    new AbstractColumnType<Double>("Number") {
+      public String getBaseType() {
+        return "NUMBER";
+      }
       public Double parse(String s) {
         return Double.parseDouble(s.trim());
       }
     };
   
   static final ColumnType<Location> LOCATION = 
-    new AbstractColumnType<Location>("LOCATION") {
+    new AbstractColumnType<Location>("Location") {
+    public String getBaseType() {
+      return "LOCATION";
+    }
     public Location parse(String s) {
       return new Location(s.trim());
     }
   };
     
   static final ColumnType<Date> DATETIME = 
-    new AbstractColumnType<Date>("DATETIME") {
+    new AbstractColumnType<Date>("DateTime") {
       @SuppressWarnings("deprecation")
       public String toString(Date date) {
         return MONTH_NAMES[date.getMonth()] + " " + date.getDay() + ", " + date.getYear();
+      }
+      
+      public String getBaseType() {
+        return "DATETIME";
       }
 
       @SuppressWarnings("deprecation")
@@ -57,21 +67,18 @@ public interface ColumnType<T> {
       }
     };
 
-  String getName();
-
   T parse(String s);
 
   String toString(T value);
 
+  String getBaseType();
+
+  
   static abstract class AbstractColumnType<T> implements ColumnType<T> {
     private final String name;
 
-    private AbstractColumnType(String name) {
+    protected AbstractColumnType(String name) {
       this.name = name;
-    }
-
-    public String getName() {
-      return name;
     }
 
     public String toString() {
@@ -81,5 +88,10 @@ public interface ColumnType<T> {
     public String toString(T value) {
       return value.toString();
     }
+    
+    public String getBaseType() {
+      return "STRING";
+    }
   }
+
 }

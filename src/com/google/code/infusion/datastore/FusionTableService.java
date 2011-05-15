@@ -297,7 +297,7 @@ public class FusionTableService {
       ColumnInfo col = columns.get(i);
       sb.append(Util.singleQuote(col.getName()));
       sb.append(": ");
-      sb.append(col.getType().getName());
+      sb.append(col.getType().getBaseType());
     }
     return sb.toString();
   }
@@ -353,9 +353,7 @@ public class FusionTableService {
               ArrayList<Entity> entities = new ArrayList<Entity>();
               for (int i = 1; i < result.length; i++) {
                 String[] parts = Util.parseCsv(result[i]);
-                Key key = new Key();
-                key.kind = query.getKind();
-                key.name = parts[0];
+                Key key = KeyFactory.createKey(query.getKind(), parts[0]);
                 Entity entity = new Entity(key);
                 for (int j = 0; j < columns.size(); j++) {
                   if (parts.length > j + 1) {
