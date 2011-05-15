@@ -9,8 +9,7 @@ public class Entity {
   TreeMap<String, Object> properties = new TreeMap<String, Object>();
 
   public Entity(String tableId) {
-    this(new Key());
-    key.kind = tableId;
+    this(new Key(tableId));
   }
 
   Entity(Key key) {

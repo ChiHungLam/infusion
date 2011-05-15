@@ -11,7 +11,7 @@ public class TableDescription implements Iterable<ColumnInfo> {
   private HashMap<String,ColumnInfo> columnMap = new HashMap<String, ColumnInfo>();
   private ArrayList<ColumnInfo> columnList = new ArrayList<ColumnInfo>();
   
-  TableDescription(String id) {
+  public TableDescription(String id) {
     this.id = id;
   }
   
