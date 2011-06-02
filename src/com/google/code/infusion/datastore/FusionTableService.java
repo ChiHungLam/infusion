@@ -367,6 +367,12 @@ public class FusionTableService {
             }
           });
     }
+
+    @Override
+    public void countEntities(FetchOptions fetchOptions,
+        AsyncCallback<Integer> asyncCallback) {
+      throw new RuntimeException("countEntities NYI");
+    }
   }
 
   public void dropTable(String tableId, final AsyncCallback<Void> callback) {
@@ -377,6 +383,25 @@ public class FusionTableService {
         callback.onSuccess(null);
       }
       
+    });
+  }
+
+
+  public void getEntity(Key key, AsyncCallback<Entity> asyncCallback) {
+    throw new RuntimeException("NYI");
+  }
+
+
+  public void put(Entity entity, final AsyncCallback<Key> asyncCallback) {
+    ArrayList<Entity> list = new ArrayList<Entity>();
+    list.add(entity);
+    put(list, new ChainedCallback<List<Key>>(asyncCallback) {
+
+      @Override
+      public void onSuccess(List<Key> result) {
+        asyncCallback.onSuccess(result.get(0));
+        
+      }
     });
   }
 }
