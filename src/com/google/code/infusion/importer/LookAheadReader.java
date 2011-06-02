@@ -4,32 +4,31 @@ package com.google.code.infusion.importer;
  * Wrapper around a string that keeps a position and some helper methods that
  * simplify parsing.
  */
-
 public class LookAheadReader {
 
   String content;
   int pos;
+  int len;
 
   public LookAheadReader(String content) {
     this.content = content;
+    len = content.length();
   }
 
   public String readTo(String chars) {
-    StringBuffer buf = new StringBuffer();
-
-    while (peek(0) != -1 && chars.indexOf((char) peek(0)) == -1) {
-      buf.append((char) read());
+    int start = pos;
+    while (pos < len && chars.indexOf(content.charAt(pos)) == -1) {
+      pos++;
     }
-
-    return buf.toString();
+    return content.substring(start, pos);
   }
 
   public String readTo(char c) {
-    StringBuffer buf = new StringBuffer();
-    while (peek(0) != -1 && peek(0) != c) {
-      buf.append((char) read());
+    int start = pos;
+    while (pos < len && content.charAt(pos) != c) {
+      pos++;
     }
-    return buf.toString();
+    return content.substring(start, pos);
   }
 
   public int read() {
@@ -53,16 +52,16 @@ public class LookAheadReader {
   }
 
   public String readWhile(String chars) {
-    StringBuffer buf = new StringBuffer();
-    while (peek(0) != -1 && chars.indexOf((char) peek(0)) != -1) {
-      buf.append((char) read());
+    int start = pos;
+    while (pos < len && chars.indexOf(content.charAt(pos)) != -1) {
+      pos++;
     }
-    return buf.toString();
+    return content.substring(start, pos);
   }
 
   public void skip(String chars) {
-    while (peek(0) != -1 && chars.indexOf((char) peek(0)) != -1) {
-      read();
+    while (pos < len && chars.indexOf(content.charAt(pos)) != -1) {
+      pos++;
     }
   }
 }
