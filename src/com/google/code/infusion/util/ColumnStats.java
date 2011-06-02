@@ -1,4 +1,4 @@
-package com.google.code.infusion.demo.gwt.client;
+package com.google.code.infusion.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,8 +12,6 @@ import com.google.code.infusion.datastore.Entity;
 import com.google.code.infusion.datastore.FetchOptions;
 import com.google.code.infusion.datastore.FusionTableService;
 import com.google.code.infusion.datastore.Query;
-import com.google.code.infusion.util.AsyncCallback;
-import com.google.code.infusion.util.ChainedCallback;
 
 public class ColumnStats implements Comparable<ColumnStats>{
 
@@ -34,29 +32,32 @@ public class ColumnStats implements Comparable<ColumnStats>{
     
     service.prepareQuery(query).asList(FetchOptions.Builder.withLimit(sampleSize), new ChainedCallback<List<Entity>>(callback) {
       @Override
-      public void onSuccess(List<Entity> result) {
-        HashMap<String,ColumnStats> map = new HashMap<String,ColumnStats>();
-        for(Entity entity: result) {
-          for (Entry<String, Object> e : entity.getProperties().entrySet()) {
-            ColumnStats stats = map.get(e.getKey());
-            if (stats == null) {
-              stats = new ColumnStats(e.getKey(), result.size());
-              map.put(e.getKey(), stats);
-            }
-            stats.add(e.getValue());
-          }
-        }
-        List<ColumnStats> list = new ArrayList<ColumnStats>();
-        for(ColumnStats stats: map.values()) {
-          stats.calc();
-          list.add(stats);
-        }
-        Collections.sort(list);
-        callback.onSuccess(list);
+      public void onSuccess(List<Entity> entityList) {
+        callback.onSuccess(getStats(entityList));
       }
     });
   }
 
+  public static List<ColumnStats> getStats(List<Entity> entityList) {
+    HashMap<String,ColumnStats> map = new HashMap<String,ColumnStats>();
+    for(Entity entity: entityList) {
+      for (Entry<String, Object> e : entity.getProperties().entrySet()) {
+        ColumnStats stats = map.get(e.getKey());
+        if (stats == null) {
+          stats = new ColumnStats(e.getKey(), entityList.size());
+          map.put(e.getKey(), stats);
+        }
+        stats.add(e.getValue());
+      }
+    }
+    List<ColumnStats> list = new ArrayList<ColumnStats>();
+    for(ColumnStats stats: map.values()) {
+      stats.calc();
+      list.add(stats);
+    }
+    Collections.sort(list);
+    return list;
+  }
 
   private void calc() {
     for (Object value: values) {

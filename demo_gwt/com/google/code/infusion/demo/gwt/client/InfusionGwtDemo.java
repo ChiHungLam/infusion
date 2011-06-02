@@ -12,6 +12,7 @@ import com.google.code.infusion.datastore.TableInfo;
 import com.google.code.infusion.gwt.client.FusionTableDataProvider;
 import com.google.code.infusion.util.AsyncCallback;
 import com.google.code.infusion.util.ClientLogin;
+import com.google.code.infusion.util.ColumnStats;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
