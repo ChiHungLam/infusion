@@ -86,7 +86,7 @@ public class InfusionGwtDemo implements EntryPoint {
     Label command = new Label(inputBox.getText());
     command.getElement().getStyle().setFontWeight(FontWeight.BOLD);
     outputPanel.add(command);
-    service.sendQuery(inputBox.getText(), new AsyncCallback<Table>() {
+    service.query(inputBox.getText(), new AsyncCallback<Table>() {
       
       @Override
       public void onSuccess(Table result) {

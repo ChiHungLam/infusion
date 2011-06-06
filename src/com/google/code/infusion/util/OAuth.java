@@ -1,5 +1,6 @@
 package com.google.code.infusion.util;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -85,72 +86,66 @@ public class OAuth {
     
  //   base = "GET&https%3A%2F%2Fwww.google.com%2Faccounts%2FOAuthGetRequestToken&oauth_callback%3Dhttp%253A%252F%252Fgooglecodesamples.com%252Foauth_playground%252Findex.php%26oauth_consumer_key%3Danonymous%26oauth_nonce%3Dbde95c5378d275ffaf36f538aab0ae77%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1274670260%26oauth_version%3D1.0%26scope%3Dhttps%253A%252F%252Fwww.google.com%252Fcalendar%252Ffeeds%252F";
     
-    System.out.println("base: " + base);
+//    System.out.println("base: " + base);
     
     String key = "anonymous&";
     if (token != null && token.getTokenSecret() != null) {
       key += urlEncode(token.getTokenSecret());
     }
     String hash = HmacSha1Base64.sign(base, key);
-    
-    
-    System.out.println("hash:"+ hash);
-    return url +  "&oauth_signature=" + Util.urlEncode(hash);
+
+   // System.out.println("hash:"+ hash);
+    return url +  "&oauth_signature=" + urlEncode(hash);
   }
 
 
   public static String urlEncode(String s) {
-    int len = s.length();
+    byte[] b;
+    try {
+      b = s.getBytes("utf-8");
+   
+    int len = b.length;
     StringBuilder sb = new StringBuilder(len * 3 / 2);
     for (int i = 0; i < len; i++) {
-      char c = s.charAt(i);
-      switch(c) {
-      case ' ':
-      case '!':
-      case '*':
-      case '(':
-      case ')':
-      case ';':
-      case ':':
-      case '@':
-      case '&':
-      case '=':
-      case '+':
-      case '$':
-      case ',':
-      case '/':
-      case '?':
-      case '%': 
-      case '#':
-      case '[':
-      case ']':
+      char c = (char) (b[i] & 255);
+      if ((c >= '0' && c <= '9') || 
+          (c >= 'A' && c <= 'Z') ||
+          (c >= 'a' && c <= 'z') || 
+          c == '_' || c == '.' || c == '~' || c == '-') {
+        sb.append(c);
+      } else {
         sb.append('%');
         sb.append(HEX_DIGITS.charAt(c / 16));
         sb.append(HEX_DIGITS.charAt(c % 16));
-        break;
-      default:
-        sb.append(c);
       }
     }
     return sb.toString();
+    } catch (UnsupportedEncodingException e) {
+     throw new RuntimeException(e);
+    }
   }
 
 
   public static String urlDecode(String s) {
     int len = s.length();
-    StringBuilder sb = new StringBuilder(len);
+    byte[] b = new byte[len];
+    int pos = 0;
     for (int i = 0; i < len; i++) {
       char c = s.charAt(i);
       if (c == '%') {
-        sb.append((char) Integer.parseInt(s.substring(i+1, i+3), 16));
+        b[pos++] = (byte) Integer.parseInt(s.substring(i+1, i+3), 16);
         i+=2;
       } else if (c == '+') {
-        sb.append(' ');
+        b[pos++] = 32;
       } else {
-        sb.append(c);
+        b[pos++] = (byte) c;
       }
     }
-    return sb.toString();
+    try {
+      return new String(b, 0, pos, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+     throw new RuntimeException(e);
+    }
   }
   
 }
