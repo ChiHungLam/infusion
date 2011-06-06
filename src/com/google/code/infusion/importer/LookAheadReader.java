@@ -4,7 +4,7 @@ package com.google.code.infusion.importer;
  * Wrapper around a string that keeps a position and some helper methods that
  * simplify parsing.
  */
-public class LookAheadReader {
+class LookAheadReader {
 
   String content;
   int pos;

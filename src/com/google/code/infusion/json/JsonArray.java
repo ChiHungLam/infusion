@@ -127,5 +127,9 @@ public class JsonArray  {
 		return result;
 	}
 
+  public void setArray(int i, JsonArray value) {
+    set(i, new Entry(JsonType.ARRAY, value));
+  }
+
 
 }

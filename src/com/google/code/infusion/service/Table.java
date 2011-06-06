@@ -17,11 +17,19 @@ public class Table {
   JsonArray cols;
   JsonArray rows;
   
-  public Table(JsonObject table) {
-    this.cols = table.getArray("cols");
-    this.rows = table.getArray("rows");
+  public Table() {
+    this (JsonArray.create(), JsonArray.create());
   }
   
+  Table(JsonObject table) {
+    this(table.getArray("cols"), table.getArray("rows"));
+  }
+  
+  public Table(JsonArray cols, JsonArray rows) {
+    this.cols = cols;
+    this.rows = rows;
+  }
+
   public JsonArray getRows() {
     return rows;
   }
