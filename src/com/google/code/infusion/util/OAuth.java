@@ -1,5 +1,6 @@
 package com.google.code.infusion.util;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -27,6 +28,17 @@ public class OAuth {
     }
   }
 
+  private static void parseParameters(String param, Map<String,String> result) {
+    for (String part: param.split("&")) {
+      int cut = part.indexOf('=');
+      if (cut == -1) {
+        result.put(part, "");
+      } else {
+        result.put(part.substring(0, cut), part.substring(cut + 1));
+      }
+    }
+  }
+  
 
   public static String signUrl(String url, String body, Token token) {
     // http//:foo.com:555/
@@ -35,14 +47,7 @@ public class OAuth {
     
     int cut = url.indexOf('?');
     if (cut != -1) {
-      for (String part: url.substring(cut + 1).split("&")) {
-        int eq = part.indexOf('=');
-        if (eq == -1) {
-          params.put(part, "");
-        } else {
-          params.put(part.substring(0, eq), part.substring(eq + 1));
-        }
-      }
+      parseParameters(url.substring(cut + 1), params);
       url = url.substring(0, cut);
     }
     
