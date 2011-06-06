@@ -19,7 +19,6 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 
@@ -87,7 +86,7 @@ public class InfusionGwtDemo implements EntryPoint {
     Label command = new Label(inputBox.getText());
     command.getElement().getStyle().setFontWeight(FontWeight.BOLD);
     outputPanel.add(command);
-    service.getQuery(inputBox.getText(), new AsyncCallback<Table>() {
+    service.sendQuery(inputBox.getText(), new AsyncCallback<Table>() {
       
       @Override
       public void onSuccess(Table result) {

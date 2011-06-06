@@ -5,6 +5,14 @@ import java.util.Iterator;
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.json.JsonObject;
 
+/**
+ * A table, backed by a JsonArrays to avoid manual parsing in the GWT 
+ * case.
+ * 
+ * TODO: Add more convenient access.
+ * 
+ * @author Stefan Haustein
+ */
 public class Table {
   JsonArray cols;
   JsonArray rows;
@@ -47,6 +55,4 @@ public class Table {
       }
     };
   }
-  
-  
 }

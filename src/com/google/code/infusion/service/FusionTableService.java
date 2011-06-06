@@ -13,6 +13,10 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class FusionTableService {
 
+  private static String BASE_URL = "https://www.google.com/fusiontables/api/query";
+    
+  public static String SCOPE = BASE_URL;
+  
   private OAuth.Token token;
 
   public FusionTableService() {
@@ -23,12 +27,28 @@ public class FusionTableService {
   }
   
 
+  /**
+   * Sends the given SQL command.
+   * Currently delegates to getQuery/postQuery, depending on the command
+   * because FusionTables does not seem to support GET requests 
+   * everywhere (which is required for proper Jsonp support to get rid
+   * of the proxy.
+   */
+  public void sendQuery(String sql, final AsyncCallback<Table> callback) {
+    String lSql = (sql.length() > 10 ? sql.substring(0, 10) : sql).toLowerCase();
+    if (lSql.startsWith("select") || lSql.startsWith("show") || lSql.startsWith("describe")) {
+      getQuery(sql, callback);
+    } else {
+      postQuery(sql, callback);
+    }
+  }
+  
+  
 
-  public void getQuery(String sql, final AsyncCallback<Table> callback) {
-    String url = "https://www.google.com/fusiontables/api/query?jsonCallback=callback&sql=" + Util.urlEncode(sql);
+  private void getQuery(String sql, final AsyncCallback<Table> callback) {
+    String url = BASE_URL + "?jsonCallback=callback&sql=" + Util.urlEncode(sql);
     if (token != null) {
-      url = OAuth.signUrl(url, null, token); //authToken);
-//      request.setHeader("Authorization", "GoogleLogin auth=" + authToken);
+      url = OAuth.signUrl(url, null, token); 
     }
     JsonpRequestBuilder builder = new JsonpRequestBuilder();
     builder.requestObject(url, new ChainedCallback<JsonObject>(callback) {
@@ -39,23 +59,35 @@ public class FusionTableService {
     });
   }
 
-  public void postQuery(String sql, final AsyncCallback<String> callback) {
-    String url = "https://www.google.com/fusiontables/api/query";
+  
+  private void postQuery(String sql, final AsyncCallback<Table> callback) {
+    String url = BASE_URL + "?jsonCallback=callback";
     String data = "sql=" + Util.urlEncode(sql);
     
     if (token != null) {
       url = OAuth.signUrl(url, data, token);
     }
     
-    HttpRequest request = new HttpRequest(HttpRequest.POST,
-      url);
+    HttpRequest request = new HttpRequest(HttpRequest.POST, url);
     request.setData(data);
     request.send(new ChainedCallback<HttpResponse>(callback) {
       public void onSuccess(HttpResponse response) {
-    // System.out.println("SQL result: " + response.getData());
-        callback.onSuccess(response.getData());
+        String data = response.getData();
+        if (data.startsWith("callback")) {
+          int start = data.indexOf('(');
+          int end = data.lastIndexOf(')');
+          JsonObject jso = JsonObject.parse(data.substring(start + 1, end));
+          callback.onSuccess(new Table(jso.getObject("table")));
+        } else if (data.trim().startsWith("<")) {
+          callback.onSuccess(new Table(JsonObject.parse(
+              "{'table':{'cols':['result'],'rows':[['" + 
+              Util.quote(data, '"', true) +"']]}")));
+        } else {
+          // TODO: Extract nicer error from <TITLE> if present
+          callback.onFailure(new RuntimeException(data));
+        }
       }
     });
   }
-  
+
 }
