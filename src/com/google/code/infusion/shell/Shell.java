@@ -1,49 +1,33 @@
-package com.google.code.infusion.demo.simple;
+package com.google.code.infusion.shell;
 
 import java.awt.Desktop;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 import com.google.code.infusion.server.OAuthLogin;
 import com.google.code.infusion.service.FusionTableService;
-import com.google.code.infusion.importer.BibtexParser;
-import com.google.code.infusion.importer.CsvParser;
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.service.Table;
 import com.google.code.infusion.util.OAuth.Token;
 import com.google.code.infusion.util.Util;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-public class SimpleDemo {
+public class Shell {
   static final String TOKEN_FILE = ".token";
   
-  BufferedReader reader = new BufferedReader(new InputStreamReader(
-      System.in));
-  
+  BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
   FusionTableService service = new FusionTableService();
   
-  
   public static void main(String[] args) throws IOException {
-    new SimpleDemo().run();
+    new Shell().run();
   }
-  
- 
 
-  private void run() throws IOException {
-    showHelp();
-    
+  private void init() {
     try {
       BufferedReader tokenReader = new BufferedReader(new FileReader (TOKEN_FILE));
       Token token = new Token();
@@ -60,21 +44,27 @@ public class SimpleDemo {
     } catch (Exception e) {
       showError("Readin authentication token failed", e);
     }
+  }
+  
+  
+  private void run() throws IOException {
+    showHelp();
+    init();
     
     while (true) {
       try {
         String cmd = reader.readLine();
-        if ("exit".equals(cmd) || "quit".equals(cmd)) {
+        String lcmd = cmd.toLowerCase();
+        if ("exit".equals(lcmd) || "quit".equals(lcmd)) {
           break;
-        } else if ("?".equals(cmd) || "help".equals(cmd)) {
+        } else if ("?".equals(lcmd) || "help".equals(lcmd)) {
           showHelp();
-        } else if (cmd.equals("auth")) {
+        } else if (lcmd.equals("auth")) {
           auth();
     //    } else if (cmd.startsWith("import ")) {
      //     importFile(cmd.substring(7));
         } else {
-          service.getQuery(cmd, new SimpleCallback<Table>() {
-
+          service.sendQuery(cmd, new SimpleCallback<Table>() {
             @Override
             public void onSuccess(Table result) {
               System.out.println(result.getCols().serialize());
@@ -92,7 +82,7 @@ public class SimpleDemo {
   }
 
   private void auth() {
-    OAuthLogin.getRequestToken("https://www.google.com/fusiontables/api/query", new SimpleCallback<Token>() {
+    OAuthLogin.getRequestToken(FusionTableService.SCOPE, new SimpleCallback<Token>() {
       @Override
       public void onSuccess(Token requestToken) {
         URI uri;

@@ -39,6 +39,10 @@ public class OAuth {
   }
   
 
+  /**
+   * Sending anything but null as the body implies a POST request.
+   * (Send "" to force a POST).
+   */
   public static String signUrl(String url, String body, Token token) {
     // http//:foo.com:555/
     
@@ -77,7 +81,7 @@ public class OAuth {
       result.append(urlEncode(urlDecode(e.getValue())));
     }
     
-    String base = "GET&" + urlEncode(url.substring(0, cut)) + '&' + urlEncode(result.toString());
+    String base = (body == null ? "GET&" : "POST&") + urlEncode(url.substring(0, cut)) + '&' + urlEncode(result.toString());
     
  //   base = "GET&https%3A%2F%2Fwww.google.com%2Faccounts%2FOAuthGetRequestToken&oauth_callback%3Dhttp%253A%252F%252Fgooglecodesamples.com%252Foauth_playground%252Findex.php%26oauth_consumer_key%3Danonymous%26oauth_nonce%3Dbde95c5378d275ffaf36f538aab0ae77%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1274670260%26oauth_version%3D1.0%26scope%3Dhttps%253A%252F%252Fwww.google.com%252Fcalendar%252Ffeeds%252F";
     
