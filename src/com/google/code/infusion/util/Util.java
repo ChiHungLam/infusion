@@ -93,14 +93,12 @@ public class Util {
       default:
         current.append(c);
       }
-
     }
     parts.add(current.toString());
 
     String[] result = new String[parts.size()];
     parts.toArray(result);
     return result;
-
   }
 
   public static String urlEncode(String url) {
@@ -110,5 +108,4 @@ public class Util {
       throw new RuntimeException(e);
     }
   }
-
 }

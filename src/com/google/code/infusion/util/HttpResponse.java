@@ -8,6 +8,9 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
+
 public class HttpResponse {
 
   HttpURLConnection connection;
