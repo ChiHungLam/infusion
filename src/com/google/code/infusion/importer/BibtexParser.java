@@ -1,15 +1,19 @@
 package com.google.code.infusion.importer;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
 
-public class BibtexParser implements Iterator<Map<String,String>> {
+import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.service.Table;
 
-  LookAheadReader reader;
-  boolean eof;
-  Map<String,String> current;
+/**
+ * Parses a BibTex file to a Table.
+ * @author Stefan Haustein
+ */
+public class BibtexParser {
+  private LookAheadReader reader;
+  private boolean eof;
+  private JsonArray cols = JsonArray.create();
+  private HashMap<String,Integer> map = new HashMap<String,Integer>();
   
   static String[] CODES = {
       "#", "\\#",
@@ -46,11 +50,26 @@ public class BibtexParser implements Iterator<Map<String,String>> {
       "\u00fc", "\\\"{u}", "\u00fc", "{\\\"u}", "\u00fd", "\\'{y}", 
       "\u00ff", "\\\"{y}" };
 
-  public BibtexParser(String bibtex) {
+  public static Table parse(String bibtex) {
+    BibtexParser parser = new BibtexParser(bibtex);
+    
+    JsonArray rows = JsonArray.create();
+    while (true) {
+      JsonArray row = parser.readRow();
+      if (row == null) {
+        break;
+      }
+      rows.setArray(rows.length(), row);
+    }
+    return new Table(parser.cols, rows);
+  }
+  
+  
+  private BibtexParser(String bibtex) {
     this.reader = new LookAheadReader(bibtex);
   }
 
-  static String replace(String src, String replace, String by) {
+  private static String replace(String src, String replace, String by) {
     int i = src.indexOf(replace);
     return (i == -1) ? src : (src.substring(0, i) + by + replace(
         src.substring(i + replace.length()), replace, by));
@@ -65,17 +84,28 @@ public class BibtexParser implements Iterator<Map<String,String>> {
     return s;
   }
 
-  private Map<String, String> readRow() {
+  private int index(String key) {
+    Integer i = map.get(key);
+    if (i == null) {
+      i = map.size();
+      map.put(key, i);
+      cols.setString(i, key);
+    }
+    return i;
+  }
+  
+  
+  private JsonArray readRow() {
     if (eof) {
       return null;
     }
 
-    Map<String, String> result = new HashMap<String, String>();
+    JsonArray result = JsonArray.create();
 
     reader.readTo("@<*");
     int i = reader.read();
     if (i == '*') {
-      result.put("bibkey", "*" + reader.readTo("\n\r\t "));
+      result.setString(index("bibkey"), "*" + reader.readTo("\n\r\t "));
       return result;
     }
     if (i != '@') {
@@ -93,15 +123,13 @@ public class BibtexParser implements Iterator<Map<String,String>> {
     StringBuffer id = new StringBuffer();
 
     type.append(reader.readTo('{'));
-
     reader.read();
-
     id.append(reader.readTo(",}"));
     int c = reader.read();
 
     // "eintrag"
-    result.put("bibtype", type.toString().trim().toLowerCase());
-    result.put("bibkey", id.toString().trim());
+    result.setString(index("bibtype"), type.toString().trim().toLowerCase());
+    result.setString(index("bibkey"), id.toString().trim());
 
     if (c == ',') {
       while (readLine(result)) {
@@ -110,8 +138,8 @@ public class BibtexParser implements Iterator<Map<String,String>> {
     return result;
   }
 
-  
-  void recurse(StringBuffer buf) {
+
+  private void recurse(StringBuffer buf) {
     while (true) {
       buf.append(reader.readTo("{}"));
       if (reader.read() != '{') {
@@ -124,7 +152,7 @@ public class BibtexParser implements Iterator<Map<String,String>> {
   }
 
 
-  boolean readLine(Map<String, String> result) {
+  private boolean readLine(JsonArray result) {
     StringBuffer valueBuf = new StringBuffer();
     String id = reader.readTo("}=").trim().toLowerCase();
     if (reader.read() == '}') {
@@ -152,31 +180,7 @@ public class BibtexParser implements Iterator<Map<String,String>> {
     }
 
     String value = valueBuf.toString().trim();
-    result.put(id, toUnicode(value));
+    result.setString(index(id), toUnicode(value));
     return (c == ',');
-  }
-
-  @Override
-  public boolean hasNext() {
-    if (current != null) {
-      return true;
-    }
-    current = readRow();
-    return current != null;
-  }
-
-  @Override
-  public Map<String, String> next() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
-    }
-    Map<String,String> result = current;
-    current = null;
-    return result;
-  }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException();
   }
 }
