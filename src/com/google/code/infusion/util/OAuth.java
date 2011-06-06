@@ -1,6 +1,5 @@
 package com.google.code.infusion.util;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -46,19 +45,27 @@ public class OAuth {
     TreeMap<String,String> params = new TreeMap<String,String>();
     
     int cut = url.indexOf('?');
-    if (cut != -1) {
-      parseParameters(url.substring(cut + 1), params);
-      url = url.substring(0, cut);
+    if (cut == -1) {
+      cut = url.length();
+      url += "?";
+    } else {
+      url += "&";
     }
+
+    url += "oauth_consumer_key=anonymous" +    
+      "&oauth_nonce=" + Integer.toHexString((int) (Math.random() * Integer.MAX_VALUE)) +
+      "&oauth_signature_method=HMAC-SHA1"+
+      "&oauth_timestamp="+ (System.currentTimeMillis() / 1000) +
+      "&oauth_versiom=1.0";
+      if (token != null && token.getToken() != null) {
+        url += "&oauth_token=" + urlEncode(token.getToken());
+      }
     
-    params.put("oauth_consumer_key", "anonymous");
-    params.put("oauth_nonce", Integer.toHexString((int) (Math.random() * Integer.MAX_VALUE)));
-    params.put("oauth_signature_method", "HMAC-SHA1");
-    params.put("oauth_timestamp", ""+ System.currentTimeMillis() / 1000);
-    if (token != null && token.getToken() != null) {
-      params.put("oauth_token", urlEncode(token.getToken()));
+    parseParameters(url.substring(cut + 1), params);
+
+    if (body != null) {
+      parseParameters(body, params);
     }
-    params.put("oauth_version", "1.0");
     
     StringBuilder result = new StringBuilder();
     for (Map.Entry<String,String> e: params.entrySet()) {
@@ -70,7 +77,7 @@ public class OAuth {
       result.append(urlEncode(urlDecode(e.getValue())));
     }
     
-    String base = "GET&" + urlEncode(url) + '&' + urlEncode(result.toString());
+    String base = "GET&" + urlEncode(url.substring(0, cut)) + '&' + urlEncode(result.toString());
     
  //   base = "GET&https%3A%2F%2Fwww.google.com%2Faccounts%2FOAuthGetRequestToken&oauth_callback%3Dhttp%253A%252F%252Fgooglecodesamples.com%252Foauth_playground%252Findex.php%26oauth_consumer_key%3Danonymous%26oauth_nonce%3Dbde95c5378d275ffaf36f538aab0ae77%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1274670260%26oauth_version%3D1.0%26scope%3Dhttps%253A%252F%252Fwww.google.com%252Fcalendar%252Ffeeds%252F";
     
@@ -84,7 +91,7 @@ public class OAuth {
     
     
     System.out.println("hash:"+ hash);
-    return url + "?"+ result + "&oauth_signature=" + Util.urlEncode(hash);
+    return url +  "&oauth_signature=" + Util.urlEncode(hash);
   }
 
 
