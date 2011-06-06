@@ -26,13 +26,13 @@ public class Util {
         pos = i + 1;
         switch(c) {
         case '\n': 
-          sb.append("\\\n");
+          sb.append("\\n");
           break;
         case '\t': 
-          sb.append("\\\t");
+          sb.append("\\t");
           break;
         case '\r': 
-          sb.append("\\\r");
+          sb.append("\\r");
           break;
         case '\\': 
           sb.append("\\\\");
@@ -101,11 +101,11 @@ public class Util {
     return result;
   }
 
-  public static String urlEncode(String url) {
+ /* public static String urlEncode(String url) {
     try {
       return URLEncoder.encode(url, "utf-8");
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
     }
-  }
+  } */
 }

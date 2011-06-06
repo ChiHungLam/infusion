@@ -2,17 +2,21 @@ package com.google.code.infusion.shell;
 
 import java.awt.Desktop;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.net.URI;
 
 import com.google.code.infusion.server.OAuthLogin;
 import com.google.code.infusion.service.FusionTableService;
+import com.google.code.infusion.importer.BibtexParser;
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.service.Table;
+import com.google.code.infusion.util.OAuth;
 import com.google.code.infusion.util.OAuth.Token;
 import com.google.code.infusion.util.Util;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -61,10 +65,10 @@ public class Shell {
           showHelp();
         } else if (lcmd.equals("auth")) {
           auth();
-    //    } else if (cmd.startsWith("import ")) {
-     //     importFile(cmd.substring(7));
+        } else if (cmd.startsWith("import ")) {
+          importFile(cmd.substring(7));
         } else {
-          service.sendQuery(cmd, new SimpleCallback<Table>() {
+          service.query(cmd, new SimpleCallback<Table>() {
             @Override
             public void onSuccess(Table result) {
               System.out.println(result.getCols().serialize());
@@ -87,7 +91,7 @@ public class Shell {
       public void onSuccess(Token requestToken) {
         URI uri;
         try {
-          uri = new URI("https://www.google.com/accounts/OAuthAuthorizeToken?hd=default&oauth_token=" + Util.urlEncode(requestToken.getToken()));
+          uri = new URI("https://www.google.com/accounts/OAuthAuthorizeToken?hd=default&oauth_token=" + OAuth.urlEncode(requestToken.getToken()));
           Desktop.getDesktop().browse(uri);
           
           System.out.println("");
@@ -119,8 +123,7 @@ public class Shell {
     });
   }
 
-/*
-  private void importFile(String fileName) throws IOException {
+  private static String readFile(String fileName) throws IOException {
     Reader reader = new InputStreamReader(new FileInputStream(fileName), "utf-8");
     char[] buf = new char[32768];
     StringBuilder sb = new StringBuilder();
@@ -131,14 +134,18 @@ public class Shell {
       }
       sb.append(buf, 0, count);
     }
-    String data = sb.toString();
-    
-    Iterator<Map<String,String>> parser;
-    
+    return sb.toString();
+  }
+  
+  
+  private void importFile(String fileName) throws IOException {
+    String data = readFile(fileName);
+    final Table table;
     if (fileName.endsWith(".bib")) {
-      parser = new BibtexParser(data);
+      table = BibtexParser.parse(data);
     } else {
-      parser = new CsvParser(data, true);
+      throw new RuntimeException("");
+      //parser = new CsvParser(data, true);
     }
     
     String name = fileName;
@@ -151,52 +158,44 @@ public class Shell {
       name = name.substring(0, cut);
     }
     
-    HashSet<String> fields = new HashSet<String>();
-    final ArrayList<Map<String,String>> entries = new ArrayList<Map<String,String>>();
-    while (parser.hasNext()) {
-      Map<String,String> entry = parser.next();
-      fields.addAll(entry.keySet());
-      entries.add(entry);
+    StringBuilder sb = new StringBuilder("CREATE TABLE ");
+    sb.append(Util.singleQuote(name));
+    sb.append(" (");
+    for (int i = 0; i < table.getCols().length(); i++) {
+      if (i != 0) {
+        sb.append(',');
+      }
+      sb.append(Util.singleQuote(table.getCols().getString(i)));
+      sb.append(":STRING");
     }
-    
-    ArrayList<ColumnInfo> columns = new ArrayList<ColumnInfo>();
-    for (String field: fields) {
-      columns.add(new ColumnInfo(field, ColumnType.STRING));
-    }
-    
-    service.createTable(name, columns, new SimpleCallback<String>() {
-      public void onSuccess(String tableId) {
-        ArrayList<Entity> entities = new ArrayList<Entity>();
-        for (Map<String,String> map: entries) {
-          Entity entity = new Entity(tableId);
-          for (Map.Entry<String, String> e : map.entrySet()) {
-            entity.setProperty(e.getKey(), e.getValue());
-          }
-          entities.add(entity);
-        }
-        service.put(entities, new SimpleCallback<List<Key>>() {
+    sb.append(')');
+    service.query(sb.toString(), new SimpleCallback<Table>() {
+      public void onSuccess(Table result) {
+        String tableId = result.getRows().getArray(0).getString(0);
+        service.insert(tableId, table, new SimpleCallback<Table>() {
           @Override
-          public void onSuccess(List<Key> result) {
-            System.out.println("" + result.size() + " entities updated / inserted.");
+          public void onSuccess(Table result) {
+            System.out.println("" + result.getRows().length() + " entities updated / inserted.");
             showPrompt();
           }
         });
       }
     });
   }
-  */
 
   private void showHelp() {
     System.out.println();
     System.out.println("Shell Commands");
-    System.out.println("  auth:                  Authenticate client");
-    System.out.println("  exit:                  Quit FT demo");
-    System.out.println("  help:                  Show this help screen");
+    System.out.println("  auth:               Authenticate client");
+    System.out.println("  exit:               Quit FT demo");
+    System.out.println("  help:               Show this help screen");
+    System.out.println("  import <filename>   Import a bibtex or CSV file");
     System.out.println();
-    System.out.println("Fusion Table Commands");
-    System.out.println("  describe <table id>:   Show table structure");
-    System.out.println("  drop table <table id>: Drop (delete) the table");
-    System.out.println("  show tables:           List available tables");
+    System.out.println("Fusion Table query examples");
+    System.out.println("  select * from 197026   Display contents of table 197026");
+    System.out.println("  show tables            List available tables*");
+    System.out.println("");
+    System.out.println("*) Requies authentication");
   }
 
 

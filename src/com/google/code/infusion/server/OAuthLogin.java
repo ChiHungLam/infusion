@@ -16,7 +16,7 @@ public class OAuthLogin {
  
   
   public static void getRequestToken(String scope, final AsyncCallback<Token> callback) {
-    String url = "https://www.google.com/accounts/OAuthGetRequestToken?scope="+Util.urlEncode(scope)+"&oauth_callback=oob";
+    String url = "https://www.google.com/accounts/OAuthGetRequestToken?scope="+OAuth.urlEncode(scope)+"&oauth_callback=oob";
     url = OAuth.signUrl(url, null, null);
     
     HttpRequest request = new HttpRequest(HttpRequest.GET, url);
@@ -46,7 +46,7 @@ public class OAuthLogin {
   }
 
   public static void getAccessToken(Token token, String verificationCode, final AsyncCallback<Token> callback) {
-    String url = "https://www.google.com/accounts/OAuthGetAccessToken?oauth_verifier="+Util.urlEncode(verificationCode);
+    String url = "https://www.google.com/accounts/OAuthGetAccessToken?oauth_verifier="+OAuth.urlEncode(verificationCode);
     url = OAuth.signUrl(url, null, token);
     
     HttpRequest request = new HttpRequest(HttpRequest.GET, url);
