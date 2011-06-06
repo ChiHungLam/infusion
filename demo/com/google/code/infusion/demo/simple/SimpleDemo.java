@@ -1,69 +1,66 @@
 package com.google.code.infusion.demo.simple;
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.Reader;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.google.code.infusion.datastore.ColumnInfo;
-import com.google.code.infusion.datastore.ColumnType;
-import com.google.code.infusion.datastore.Entity;
-import com.google.code.infusion.datastore.FusionTableService;
-import com.google.code.infusion.datastore.Key;
-import com.google.code.infusion.datastore.TableDescription;
-import com.google.code.infusion.datastore.TableInfo;
+import com.google.code.infusion.server.OAuthLogin;
+import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.importer.BibtexParser;
 import com.google.code.infusion.importer.CsvParser;
-import com.google.code.infusion.util.AsyncCallback;
-import com.google.code.infusion.util.ClientLogin;
+import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.service.Table;
+import com.google.code.infusion.util.OAuth.Token;
+import com.google.code.infusion.util.Util;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class SimpleDemo {
-  static BufferedReader reader = new BufferedReader(new InputStreamReader(
+  static final String TOKEN_FILE = ".token";
+  
+  BufferedReader reader = new BufferedReader(new InputStreamReader(
       System.in));
-  static FusionTableService service;
-
+  
+  FusionTableService service = new FusionTableService();
+  
+  
   public static void main(String[] args) throws IOException {
-
-    System.out.print("Username (email): ");
-    String user = reader.readLine();
-    if (user == null || user.length() == 0) {
-      return;
-    }
-
-    System.out.print("Password: ");
-    String password = reader.readLine();
-    if (password == null || password.length() == 0) {
-      return;
-    }
-    for (int i = 0; i < 50; i++) {
-      System.out.println();
-    }
-
-    ClientLogin.requestAuthToken(ClientLogin.ACCOUNT_TYPE_GOOGLE, user,
-        password, "fusiontables", "GoogleCodeProjectInfusion-Infusion-0.1",
-        new AsyncCallback<String>() {
-          public void onSuccess(String result) {
-            runSession(result);
-          }
-
-          public void onFailure(Throwable caught) {
-            caught.printStackTrace();
-            return;
-          }
-        });
+    new SimpleDemo().run();
   }
+  
+ 
 
-  private static void runSession(String authToken) {
-    System.out.println("Authenticated Sucessfully; Auth token: " + authToken);
-    service = new FusionTableService(authToken);
+  private void run() throws IOException {
     showHelp();
+    
+    try {
+      BufferedReader tokenReader = new BufferedReader(new FileReader (TOKEN_FILE));
+      Token token = new Token();
+      token.setToken(tokenReader.readLine());
+      token.setTokenSecret(tokenReader.readLine());
+      service.setRequestToken(token);
+      tokenReader.close();
+      System.out.println();
+      if (token.getToken() == null || token.getTokenSecret() == null) {
+        throw new NullPointerException("Token or token secret is empty");
+      }
+      System.out.println("Using existing authentication token");
+      showPrompt();
+    } catch (Exception e) {
+      showError("Readin authentication token failed", e);
+    }
+    
     while (true) {
       try {
         String cmd = reader.readLine();
@@ -71,17 +68,21 @@ public class SimpleDemo {
           break;
         } else if ("?".equals(cmd) || "help".equals(cmd)) {
           showHelp();
-        } else if ("show tables".equals(cmd)) {
-          showTables();
-        } else if (cmd.startsWith("describe ")) {
-          describe(cmd.substring(9).trim());
-        } else if (cmd.startsWith("import ")) {
-          importFile(cmd.substring(7));
-        } else if (cmd.startsWith("drop table ")) {
-          dropTable(cmd.substring(11));
+        } else if (cmd.equals("auth")) {
+          auth();
+    //    } else if (cmd.startsWith("import ")) {
+     //     importFile(cmd.substring(7));
         } else {
-          System.out.println("Unrecognized command or missing parameter: " + cmd);
-          showPrompt();
+          service.getQuery(cmd, new SimpleCallback<Table>() {
+
+            @Override
+            public void onSuccess(Table result) {
+              System.out.println(result.getCols().serialize());
+              for (JsonArray row: result.getRowsAsIterable()) {
+                System.out.println(row.serialize());
+              }
+              showPrompt();
+            }});
         }
       } catch (IOException e) {
         e.printStackTrace();
@@ -90,23 +91,46 @@ public class SimpleDemo {
     System.out.println("Good bye!");
   }
 
-  private static void dropTable(String tableId) {
-    service.dropTable(tableId, new AsyncCallback<Void>() {
+  private void auth() {
+    OAuthLogin.getRequestToken("https://www.google.com/fusiontables/api/query", new SimpleCallback<Token>() {
       @Override
-      public void onSuccess(Void result) {
-        System.out.println("Table dropped");
-        showPrompt();
-      }
+      public void onSuccess(Token requestToken) {
+        URI uri;
+        try {
+          uri = new URI("https://www.google.com/accounts/OAuthAuthorizeToken?hd=default&oauth_token=" + Util.urlEncode(requestToken.getToken()));
+          Desktop.getDesktop().browse(uri);
+          
+          System.out.println("");
+          System.out.print("Verification code: ");
+          String verificationCode = reader.readLine();
+        
+          OAuthLogin.getAccessToken(requestToken, verificationCode, new SimpleCallback<Token>() {
 
-      @Override
-      public void onFailure(Throwable error) {
-        showError(error);
+            @Override
+            public void onSuccess(Token result) {
+              service.setRequestToken(result);
+              
+              try {
+                PrintWriter writer = new PrintWriter(new FileWriter(TOKEN_FILE));
+                writer.println(result.getToken());
+                writer.println(result.getTokenSecret());
+                writer.close();
+                showPrompt();
+              } catch(Exception e) {
+                showError("Saving Request Token failed:", e);
+              }
+            }
+          });
+          
+        } catch (Exception e) {
+          showError(e);
+        }
       }
-      
     });
   }
 
-  private static void importFile(String fileName) throws IOException {
+/*
+  private void importFile(String fileName) throws IOException {
     Reader reader = new InputStreamReader(new FileInputStream(fileName), "utf-8");
     char[] buf = new char[32768];
     StringBuilder sb = new StringBuilder();
@@ -150,7 +174,7 @@ public class SimpleDemo {
       columns.add(new ColumnInfo(field, ColumnType.STRING));
     }
     
-    service.createTable(name, columns, new AsyncCallback<String>() {
+    service.createTable(name, columns, new SimpleCallback<String>() {
       public void onSuccess(String tableId) {
         ArrayList<Entity> entities = new ArrayList<Entity>();
         for (Map<String,String> map: entries) {
@@ -160,75 +184,54 @@ public class SimpleDemo {
           }
           entities.add(entity);
         }
-        service.put(entities, new AsyncCallback<List<Key>>() {
-
+        service.put(entities, new SimpleCallback<List<Key>>() {
           @Override
           public void onSuccess(List<Key> result) {
             System.out.println("" + result.size() + " entities updated / inserted.");
             showPrompt();
           }
-
-          @Override
-          public void onFailure(Throwable error) {
-            showError(error);
-          }
         });
       }
-      public void onFailure(Throwable error) {
-        showError(error);
-      }});
+    });
   }
+  */
 
-  private static void showHelp() {
+  private void showHelp() {
     System.out.println();
-    System.out.println("describe <table id>:   Show table structure");
-    System.out.println("drop table <table id>: Drop (delete) the table");
-    System.out.println("help:                  Show this help screen");
-    System.out.println("exit:                  Quit FT demo");
-    System.out.println("show tables:           List available tables");
-    showPrompt();
+    System.out.println("Shell Commands");
+    System.out.println("  auth:                  Authenticate client");
+    System.out.println("  exit:                  Quit FT demo");
+    System.out.println("  help:                  Show this help screen");
+    System.out.println();
+    System.out.println("Fusion Table Commands");
+    System.out.println("  describe <table id>:   Show table structure");
+    System.out.println("  drop table <table id>: Drop (delete) the table");
+    System.out.println("  show tables:           List available tables");
   }
 
-  private static void describe(String tableId) {
-    service.describe(tableId, new AsyncCallback<TableDescription>() {
-      public void onFailure(Throwable caught) {
-        showError(caught);
-      }
 
-      @Override
-      public void onSuccess(TableDescription result) {
-        System.out.println("Columns:");
-        for (ColumnInfo ci : result) {
-          System.out.println(ci);
-        }
-        showPrompt();
-      }
-    });
-  }
-
-  private static void showTables() {
-    service.showTables(new AsyncCallback<List<TableInfo>>() {
-      public void onFailure(Throwable caught) {
-        showError(caught);
-      }
-
-      public void onSuccess(List<TableInfo> result) {
-        System.out.println("Tables available:");
-        for (TableInfo td : result) {
-          System.out.println(td);
-        }
-        showPrompt();
-      }
-    });
-  }
-
-  private static void showPrompt() {
+  private void showPrompt() {
     System.out.print("\nCommand? ");
     System.out.flush();
   }
 
-  private static void showError(Throwable caught) {
-    caught.printStackTrace();
+  private void showError(Throwable caught) {
+    showError(null, caught);
+  }
+  
+  private void showError(String message, Throwable caught) {
+    System.out.println();
+    if (message != null) {
+      System.out.println(message);
+    }
+    caught.printStackTrace(System.out);
     showPrompt();
+  }
+  
+  abstract class SimpleCallback<T> implements AsyncCallback<T> {
+    @Override
+    public void onFailure(Throwable error) {
+      showError(error);
+    }
   }
 }

@@ -1,5 +1,8 @@
 package com.google.code.infusion.util;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
+
 public abstract class ChainedCallback<T> implements AsyncCallback<T> {
 
 	private final AsyncCallback<?> callback;

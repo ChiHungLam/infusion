@@ -2,6 +2,9 @@ package com.google.code.infusion.util;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+
+
 public class HttpRequest {
 
 	public static final String GET = "GET";
