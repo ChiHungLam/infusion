@@ -19,7 +19,12 @@ public class HttpResponse {
 
   HttpResponse(HttpRequestBuilder request, AsyncCallback<HttpResponse> callback) {
     try {
-      connection = (HttpURLConnection) new URL(request.url).openConnection();
+      String url = request.url;
+      if (request.token != null) {
+        url = OAuth.signUrl(request.method, url, request.data, request.token);
+      }
+      
+      connection = (HttpURLConnection) new URL(url).openConnection();
       connection.setDoOutput(request.data != null);
       connection.setRequestMethod(request.method);
       for (String[] header : request.headers) {
