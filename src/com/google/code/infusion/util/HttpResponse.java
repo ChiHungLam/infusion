@@ -17,7 +17,7 @@ public class HttpResponse {
   String statusText;
   String data;
 
-  HttpResponse(HttpRequest request, AsyncCallback<HttpResponse> callback) {
+  HttpResponse(HttpRequestBuilder request, AsyncCallback<HttpResponse> callback) {
     try {
       connection = (HttpURLConnection) new URL(request.url).openConnection();
       connection.setDoOutput(request.data != null);

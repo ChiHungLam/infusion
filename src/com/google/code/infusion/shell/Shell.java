@@ -11,13 +11,12 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.net.URI;
 
-import com.google.code.infusion.server.OAuthLogin;
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.importer.BibtexParser;
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.service.Table;
-import com.google.code.infusion.util.OAuth;
-import com.google.code.infusion.util.OAuth.Token;
+import com.google.code.infusion.util.OAuthLogin;
+import com.google.code.infusion.util.OAuthToken;
 import com.google.code.infusion.util.Util;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -34,7 +33,7 @@ public class Shell {
   private void init() {
     try {
       BufferedReader tokenReader = new BufferedReader(new FileReader (TOKEN_FILE));
-      Token token = new Token();
+      OAuthToken token = new OAuthToken();
       token.setToken(tokenReader.readLine());
       token.setTokenSecret(tokenReader.readLine());
       service.setRequestToken(token);
@@ -86,22 +85,22 @@ public class Shell {
   }
 
   private void auth() {
-    OAuthLogin.getRequestToken(FusionTableService.SCOPE, new SimpleCallback<Token>() {
+    OAuthLogin.getRequestToken(FusionTableService.SCOPE, new SimpleCallback<OAuthToken>() {
       @Override
-      public void onSuccess(Token requestToken) {
+      public void onSuccess(OAuthToken requestToken) {
         URI uri;
         try {
-          uri = new URI("https://www.google.com/accounts/OAuthAuthorizeToken?hd=default&oauth_token=" + OAuth.urlEncode(requestToken.getToken()));
+          uri = new URI("https://www.google.com/accounts/OAuthAuthorizeToken?hd=default&oauth_token=" + Util.urlEncode(requestToken.getToken()));
           Desktop.getDesktop().browse(uri);
           
           System.out.println("");
           System.out.print("Verification code: ");
           String verificationCode = reader.readLine();
         
-          OAuthLogin.getAccessToken(requestToken, verificationCode, new SimpleCallback<Token>() {
+          OAuthLogin.getAccessToken(requestToken, verificationCode, new SimpleCallback<OAuthToken>() {
 
             @Override
-            public void onSuccess(Token result) {
+            public void onSuccess(OAuthToken result) {
               service.setRequestToken(result);
               
               try {

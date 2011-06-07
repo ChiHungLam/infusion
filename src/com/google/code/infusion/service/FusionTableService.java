@@ -5,10 +5,10 @@ import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.json.JsonObject;
 import com.google.code.infusion.util.ChainedCallback;
 
-import com.google.code.infusion.util.HttpRequest;
+import com.google.code.infusion.util.HttpRequestBuilder;
 import com.google.code.infusion.util.HttpResponse;
-import com.google.code.infusion.util.JsonpRequestBuilder;
 import com.google.code.infusion.util.OAuth;
+import com.google.code.infusion.util.OAuthToken;
 import com.google.code.infusion.util.Util;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -18,33 +18,15 @@ public class FusionTableService {
     
   public static String SCOPE = BASE_URL;
   
-  private OAuth.Token token;
+  private OAuthToken token;
 
   public FusionTableService() {
   }
 
-  public void setRequestToken(OAuth.Token token) {
+  public void setRequestToken(OAuthToken token) {
     this.token = token;
   }
-  
 
-  /**
-   * Sends the given SQL command.
-   * Currently delegates to getQuery/postQuery, depending on the command
-   * because FusionTables does not seem to support GET requests 
-   * everywhere (which is required for proper Jsonp support to get rid
-   * of the proxy.
-   */
-  public void query(String sql, final AsyncCallback<Table> callback) {
-    String lSql = (sql.length() > 10 ? sql.substring(0, 10) : sql).toLowerCase();
-    if (lSql.startsWith("select") || lSql.startsWith("show") || lSql.startsWith("describe")) {
-      getQuery(sql, callback);
-    } else {
-      postQuery(sql, callback);
-    }
-  }
-  
-  
   public void insert(String tableId, Table data, AsyncCallback<Table> callback) {
     insert(tableId, data, 0, callback);
   }
@@ -80,7 +62,7 @@ public class FusionTableService {
       }
     }
 //    System.out.println("Sending statement: " + sb);
-    postQuery(sb.toString(), new ChainedCallback<Table>(callback) {
+    query(sb.toString(), new ChainedCallback<Table>(callback) {
       @Override
       public void onSuccess(Table result) {
         if (end < data.getRows().length()) {
@@ -93,8 +75,9 @@ public class FusionTableService {
   }
   
 
+  /*
   private void getQuery(String sql, final AsyncCallback<Table> callback) {
-    String url = BASE_URL + "?jsonCallback=callback&sql=" + OAuth.urlEncode(sql);
+    String url = BASE_URL + "?jsonCallback=callback&sql=" + Util.urlEncode(sql);
     if (token != null) {
       url = OAuth.signUrl(url, null, token); 
     }
@@ -106,17 +89,29 @@ public class FusionTableService {
       }
     });
   }
-
+*/ 
   
-  private void postQuery(String sql, final AsyncCallback<Table> callback) {
+  /**
+   * Sends the given SQL command.
+   */
+  public void query(String sql, final AsyncCallback<Table> callback) {
+    String lSql = (sql.length() > 10 ? sql.substring(0, 10) : sql).toLowerCase();
     String url = BASE_URL + "?jsonCallback=callback";
-    String data = "sql=" + OAuth.urlEncode(sql);
-    
-    if (token != null) {
-      url = OAuth.signUrl(url, data, token);
+    String data = "sql=" + Util.urlEncode(sql);
+    String method;
+    if (lSql.startsWith("select") || lSql.startsWith("show") || lSql.startsWith("describe")) {
+      method = HttpRequestBuilder.GET;
+      url = url + "&" + data;
+      data = null;
+    } else {
+      method = HttpRequestBuilder.POST;
     }
     
-    HttpRequest request = new HttpRequest(HttpRequest.POST, url);
+    if (token != null) {
+      url = OAuth.signUrl(method, url, data, token);
+    }
+    
+    HttpRequestBuilder request = new HttpRequestBuilder(method, url);
     request.setData(data);
     request.send(new ChainedCallback<HttpResponse>(callback) {
       public void onSuccess(HttpResponse response) {
@@ -128,10 +123,14 @@ public class FusionTableService {
           callback.onSuccess(new Table(jso.getObject("table")));
         } else if (!data.trim().startsWith("<")) {
           callback.onSuccess(new Table(JsonObject.parse(
-              "{'table':{'cols':['result'],'rows':[[" + 
-              Util.quote(data, '"', true) +"]]}}")));
+              "{'cols':['result'],'rows':[[" + 
+              Util.quote(data.trim(), '"', true) +"]]}")));
         } else {
-          // TODO: Extract nicer error from <TITLE> if present
+          int start = data.indexOf("<TITLE>");
+          int end = data.indexOf("</TITLE>");
+          if (start != -1 && end != -1) {
+            data = data.substring(start + 7, end);
+          }
           callback.onFailure(new RuntimeException(data));
         }
       }
