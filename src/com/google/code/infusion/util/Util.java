@@ -3,6 +3,7 @@ package com.google.code.infusion.util;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class Util {
 
@@ -100,6 +101,67 @@ public class Util {
     parts.toArray(result);
     return result;
   }
+
+  public static void parseParameters(String param, Map<String,String> result) {
+    for (String part: param.split("&")) {
+      int cut = part.indexOf('=');
+      if (cut == -1) {
+        result.put(part, "");
+      } else {
+        result.put(part.substring(0, cut), part.substring(cut + 1));
+      }
+    }
+  }
+
+  public static String urlEncode(String s) {
+    byte[] b;
+    try {
+      b = s.getBytes("utf-8");
+  
+    int len = b.length;
+    StringBuilder sb = new StringBuilder(len * 3 / 2);
+    for (int i = 0; i < len; i++) {
+      char c = (char) (b[i] & 255);
+      if ((c >= '0' && c <= '9') || 
+          (c >= 'A' && c <= 'Z') ||
+          (c >= 'a' && c <= 'z') || 
+          c == '_' || c == '.' || c == '~' || c == '-') {
+        sb.append(c);
+      } else {
+        sb.append('%');
+        sb.append(Util.HEX_DIGITS.charAt(c / 16));
+        sb.append(Util.HEX_DIGITS.charAt(c % 16));
+      }
+    }
+    return sb.toString();
+    } catch (UnsupportedEncodingException e) {
+     throw new RuntimeException(e);
+    }
+  }
+
+  public static String urlDecode(String s) {
+    int len = s.length();
+    byte[] b = new byte[len];
+    int pos = 0;
+    for (int i = 0; i < len; i++) {
+      char c = s.charAt(i);
+      if (c == '%') {
+        b[pos++] = (byte) Integer.parseInt(s.substring(i+1, i+3), 16);
+        i+=2;
+      } else if (c == '+') {
+        b[pos++] = 32;
+      } else {
+        b[pos++] = (byte) c;
+      }
+    }
+    try {
+      return new String(b, 0, pos, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+     throw new RuntimeException(e);
+    }
+  }
+
+  static final String HEX_DIGITS = "0123456789ABCDEF";
 
  /* public static String urlEncode(String url) {
     try {

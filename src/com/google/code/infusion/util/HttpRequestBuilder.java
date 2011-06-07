@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 
-public class HttpRequest {
+public class HttpRequestBuilder {
 
 	public static final String GET = "GET";
 	public static final String POST = "POST";
@@ -14,13 +14,14 @@ public class HttpRequest {
 	String url;
 	ArrayList<String[]> headers = new ArrayList<String[]>();
 	String data;
+	OAuthToken token;
 	
-	public HttpRequest(String method, String url) {
+	public HttpRequestBuilder(String method, String url) {
 		this.method = method;
 		this.url = url;
 	}
 	
-	public HttpRequest setHeader(String name, String value) {
+	public HttpRequestBuilder setHeader(String name, String value) {
 		headers.add(new String[] {name, value});
 		return this;
 	}
@@ -28,8 +29,12 @@ public class HttpRequest {
 	public void send(AsyncCallback<HttpResponse> callback) {
 		new HttpResponse(this, callback);
 	}
+	
+	public void setOAuthToken(OAuthToken token) {
+	  this.token = token;
+	}
 
-	public HttpRequest setData(String data) {
+	public HttpRequestBuilder setData(String data) {
 		this.data = data;
 		return this;
 	}
