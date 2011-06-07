@@ -73,24 +73,8 @@ public class FusionTableService {
       }
     });
   }
-  
 
-  /*
-  private void getQuery(String sql, final AsyncCallback<Table> callback) {
-    String url = BASE_URL + "?jsonCallback=callback&sql=" + Util.urlEncode(sql);
-    if (token != null) {
-      url = OAuth.signUrl(url, null, token); 
-    }
-    JsonpRequestBuilder builder = new JsonpRequestBuilder();
-    builder.requestObject(url, new ChainedCallback<JsonObject>(callback) {
-      public void onSuccess(JsonObject response) {
-       // System.out.println("SQL result: " + response);
-        callback.onSuccess(new Table(response.getObject("table")));
-      }
-    });
-  }
-*/ 
-  
+
   /**
    * Sends the given SQL command.
    */
