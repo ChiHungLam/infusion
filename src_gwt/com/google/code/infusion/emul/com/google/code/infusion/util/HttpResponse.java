@@ -9,7 +9,12 @@ import com.google.gwt.xhr.client.ReadyStateChangeHandler;
 public class HttpResponse {
     XMLHttpRequest xhr;
 
-    HttpResponse(final HttpRequest request, final AsyncCallback<HttpResponse> callback) {
+    public static String signUrl(String method, String url, String body, OAuthToken token) {
+      throw new UnsupportedOperationException();
+    }
+   
+    
+    HttpResponse(final HttpRequestBuilder request, final AsyncCallback<HttpResponse> callback) {
         xhr = XMLHttpRequest.create();
         xhr.setOnReadyStateChange(new ReadyStateChangeHandler() {
             public void onReadyStateChange(XMLHttpRequest xhr) {
@@ -25,6 +30,9 @@ public class HttpResponse {
             xhr.setRequestHeader(header[0], header[1]);
         }
         xhr.setRequestHeader("X-Forward-To", request.url);
+        if (request.token != null) {
+          xhr.setRequestHeader("X-OAuth-Token", request.token.toString());
+        }
         xhr.send(request.data);
     }
 

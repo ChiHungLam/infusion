@@ -108,7 +108,7 @@ public class Util {
       if (cut == -1) {
         result.put(part, "");
       } else {
-        result.put(part.substring(0, cut), part.substring(cut + 1));
+        result.put(part.substring(0, cut), Util.urlDecode(part.substring(cut + 1)));
       }
     }
   }
