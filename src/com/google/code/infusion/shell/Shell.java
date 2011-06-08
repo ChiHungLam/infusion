@@ -90,7 +90,7 @@ public class Shell {
       public void onSuccess(OAuthToken requestToken) {
         URI uri;
         try {
-          uri = new URI("https://www.google.com/accounts/OAuthAuthorizeToken?hd=default&oauth_token=" + Util.urlEncode(requestToken.getToken()));
+          uri = new URI(OAuthLogin.getAuthorizationUrl(requestToken));
           Desktop.getDesktop().browse(uri);
           
           System.out.println("");

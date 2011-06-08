@@ -7,7 +7,6 @@ import com.google.code.infusion.util.ChainedCallback;
 
 import com.google.code.infusion.util.HttpRequestBuilder;
 import com.google.code.infusion.util.HttpResponse;
-import com.google.code.infusion.util.OAuth;
 import com.google.code.infusion.util.OAuthToken;
 import com.google.code.infusion.util.Util;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -92,7 +91,7 @@ public class FusionTableService {
     }
     
     if (token != null) {
-      url = OAuth.signUrl(method, url, data, token);
+      url = HttpResponse.signUrl(method, url, data, token);
     }
     
     HttpRequestBuilder request = new HttpRequestBuilder(method, url);

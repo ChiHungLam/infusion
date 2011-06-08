@@ -1,14 +1,17 @@
-package com.google.code.infusion.demo.gwt.client;
+package com.google.code.infusion.gwt.client.demo;
 
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
+import com.google.code.infusion.util.OAuthLogin;
+import com.google.code.infusion.util.OAuthToken;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -30,23 +33,25 @@ public class InfusionGwtDemo implements EntryPoint {
   private FusionTableService service = new FusionTableService();
 
   FlowPanel outputPanel = new FlowPanel();
-  ScrollPanel scrollPanel = new ScrollPanel(outputPanel);
-  DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
-  FormPanel formPanel = new FormPanel();
   TextBox inputBox = new TextBox();
-  FlowPanel buttonPanel = new FlowPanel();
+  ScrollPanel scrollPanel = new ScrollPanel(outputPanel);
   
   /**
    * This is the entry point method.
    */
   public void onModuleLoad() {
     Document.get().getElementById("loading").removeFromParent();
-    
+
+    DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
+    FlowPanel buttonPanel = new FlowPanel();
     Button submitButton = new Button("Submit");
     Button clearButton = new Button("Clear");
+    Button authButton = new Button("Authenticate");
     buttonPanel.add(submitButton);
     buttonPanel.add(clearButton);
+    buttonPanel.add(authButton);
 
+    FormPanel formPanel = new FormPanel();
     mainPanel.addSouth(buttonPanel, 2);
     mainPanel.addSouth(formPanel, 2);
     
@@ -71,22 +76,40 @@ public class InfusionGwtDemo implements EntryPoint {
       }});
     
     clearButton.addClickHandler(new ClickHandler() {
-
       @Override
       public void onClick(ClickEvent event) {
         outputPanel.removeFromParent();
         outputPanel = new FlowPanel();
         scrollPanel.add(outputPanel);
       }
-      
     });
+    
+    authButton.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
+        authenticate();
+      }
+
+    });
+    
   }
 
+  private void authenticate() {
+    OAuthLogin.getRequestToken(FusionTableService.SCOPE, new SimpleCallback<OAuthToken>() {
+      @Override
+      public void onSuccess(OAuthToken requestToken) {
+      // TODO Auto-generated method stub
+        Window.open(OAuthLogin.getAuthorizationUrl(requestToken), "", "");
+      }
+    });
+  }
+  
+  
   private void executeCommand() {
     Label command = new Label(inputBox.getText());
     command.getElement().getStyle().setFontWeight(FontWeight.BOLD);
     outputPanel.add(command);
-    service.query(inputBox.getText(), new AsyncCallback<Table>() {
+    service.query(inputBox.getText(), new SimpleCallback<Table>() {
       
       @Override
       public void onSuccess(Table result) {
@@ -105,16 +128,15 @@ public class InfusionGwtDemo implements EntryPoint {
         outputPanel.add(grid);
         outputPanel.add(new Label("\u00A0"));
       }
-
-      @Override
-      public void onFailure(Throwable error) {
-        outputPanel.add(new Label(error.toString()));
-      }
-      
     });
 
   }
 
+  abstract class SimpleCallback<T> implements AsyncCallback<T>{
+    public void onFailure(Throwable error) {
+      outputPanel.add(new Label(error.toString()));
+    }
+  }
 
   
 }
