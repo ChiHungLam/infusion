@@ -85,7 +85,7 @@ public class Shell {
   }
 
   private void auth() {
-    OAuthLogin.getRequestToken(FusionTableService.SCOPE, new SimpleCallback<OAuthToken>() {
+    OAuthLogin.getRequestToken(FusionTableService.SCOPE, null, new SimpleCallback<OAuthToken>() {
       @Override
       public void onSuccess(OAuthToken requestToken) {
         URI uri;

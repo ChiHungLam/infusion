@@ -90,11 +90,9 @@ public class FusionTableService {
       method = HttpRequestBuilder.POST;
     }
     
-    if (token != null) {
-      url = HttpResponse.signUrl(method, url, data, token);
-    }
     
     HttpRequestBuilder request = new HttpRequestBuilder(method, url);
+    request.setOAuthToken(token);
     request.setData(data);
     request.send(new ChainedCallback<HttpResponse>(callback) {
       public void onSuccess(HttpResponse response) {

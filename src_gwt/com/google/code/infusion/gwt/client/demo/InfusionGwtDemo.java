@@ -11,6 +11,7 @@ import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
@@ -35,6 +36,7 @@ public class InfusionGwtDemo implements EntryPoint {
   FlowPanel outputPanel = new FlowPanel();
   TextBox inputBox = new TextBox();
   ScrollPanel scrollPanel = new ScrollPanel(outputPanel);
+  OAuthToken token;
   
   /**
    * This is the entry point method.
@@ -42,6 +44,33 @@ public class InfusionGwtDemo implements EntryPoint {
   public void onModuleLoad() {
     Document.get().getElementById("loading").removeFromParent();
 
+    String tokenCookie = Cookies.getCookie("token");
+    if (tokenCookie != null) {
+      token = new OAuthToken();
+      token.parse(tokenCookie);
+      service.setRequestToken(token);
+      println("Token loaded from cookies.");
+    }
+    
+    String verificationCode = Window.Location.getParameter("oauth_verifier");
+    if (verificationCode != null) {
+      if (token == null) {
+        println("Missing request token for verifcation code.");
+      } else if (!token.getToken().equals(Window.Location.getParameter("oauth_token"))) {
+        println("Token mismatch; expected: " + token.getToken());
+      } else {
+        println("Upgrading request token to access token.");
+        OAuthLogin.getAccessToken(token, verificationCode, new SimpleCallback<OAuthToken>() {
+          @Override
+          public void onSuccess(OAuthToken result) {
+            println("Access token obtained successfully.");
+            Cookies.setCookie("token", result.toString());
+            service.setRequestToken(token);
+          }});
+      }
+    }
+
+    println("Enter sql queries at the bottom of this page.");
     DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
     FlowPanel buttonPanel = new FlowPanel();
     Button submitButton = new Button("Submit");
@@ -87,28 +116,33 @@ public class InfusionGwtDemo implements EntryPoint {
     authButton.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent event) {
-        authenticate();
+        OAuthLogin.getRequestToken(FusionTableService.SCOPE,  Document.get().getURL(), new SimpleCallback<OAuthToken>() {
+          @Override
+            public void onSuccess(final OAuthToken requestToken) {
+            Cookies.setCookie("token", requestToken.toString());
+            Window.Location.assign(OAuthLogin.getAuthorizationUrl(requestToken));
+          }
+        });
       }
-
     });
     
   }
 
-  private void authenticate() {
-    OAuthLogin.getRequestToken(FusionTableService.SCOPE, new SimpleCallback<OAuthToken>() {
-      @Override
-      public void onSuccess(OAuthToken requestToken) {
-      // TODO Auto-generated method stub
-        Window.open(OAuthLogin.getAuthorizationUrl(requestToken), "", "");
-      }
-    });
+  
+  private void println() {
+    println("\u00a0");
+  }
+  
+  private void println(String s) {
+    Label label = new Label(s);
+    label.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+    outputPanel.add(label);
+    scrollPanel.scrollToBottom();
   }
   
   
   private void executeCommand() {
-    Label command = new Label(inputBox.getText());
-    command.getElement().getStyle().setFontWeight(FontWeight.BOLD);
-    outputPanel.add(command);
+    println(inputBox.getText());
     service.query(inputBox.getText(), new SimpleCallback<Table>() {
       
       @Override
@@ -126,7 +160,7 @@ public class InfusionGwtDemo implements EntryPoint {
         }
         
         outputPanel.add(grid);
-        outputPanel.add(new Label("\u00A0"));
+        println();
       }
     });
 
@@ -134,7 +168,7 @@ public class InfusionGwtDemo implements EntryPoint {
 
   abstract class SimpleCallback<T> implements AsyncCallback<T>{
     public void onFailure(Throwable error) {
-      outputPanel.add(new Label(error.toString()));
+      println(error.toString());
     }
   }
 
