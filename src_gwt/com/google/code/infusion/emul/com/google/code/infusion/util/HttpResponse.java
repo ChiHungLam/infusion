@@ -7,44 +7,44 @@ import com.google.gwt.xhr.client.XMLHttpRequest;
 import com.google.gwt.xhr.client.ReadyStateChangeHandler;
 
 public class HttpResponse {
-    XMLHttpRequest xhr;
+  XMLHttpRequest xhr;
 
-    public static String signUrl(String method, String url, String body, OAuthToken token) {
-      throw new UnsupportedOperationException();
-    }
-   
+  public static String signUrl(String method, String url, String body, OAuthToken token) {
+    throw new UnsupportedOperationException();
+  }
     
-    HttpResponse(final HttpRequestBuilder request, final AsyncCallback<HttpResponse> callback) {
-        xhr = XMLHttpRequest.create();
-        xhr.setOnReadyStateChange(new ReadyStateChangeHandler() {
-            public void onReadyStateChange(XMLHttpRequest xhr) {
-                if (xhr.getReadyState() == XMLHttpRequest.DONE) {
-                    callback.onSuccess(HttpResponse.this);
-                    xhr.clearOnReadyStateChange();
-                }
-            }
-        });
 
-        xhr.open(request.method, GWT.getModuleBaseURL() + "proxy");
-        for (String[] header: request.headers) {
-            xhr.setRequestHeader(header[0], header[1]);
+  HttpResponse(final HttpRequestBuilder request, final AsyncCallback<HttpResponse> callback) {
+    xhr = XMLHttpRequest.create();
+    xhr.setOnReadyStateChange(new ReadyStateChangeHandler() {
+      public void onReadyStateChange(XMLHttpRequest xhr) {
+        if (xhr.getReadyState() == XMLHttpRequest.DONE) {
+          callback.onSuccess(HttpResponse.this);
+          xhr.clearOnReadyStateChange();
         }
-        xhr.setRequestHeader("X-Forward-To", request.url);
-        if (request.token != null) {
-          xhr.setRequestHeader("X-OAuth-Token", request.token.toString());
-        }
-        xhr.send(request.data);
-    }
+      }
+    });
 
-    public String getData() {
-        return xhr.getResponseText();
+    xhr.open(request.method, GWT.getModuleBaseURL() + "proxy");
+    for (String[] header: request.headers) {
+      xhr.setRequestHeader(header[0], header[1]);
     }
+    xhr.setRequestHeader("X-Forward-To", request.url);
+    if (request.token != null) {
+      xhr.setRequestHeader("X-OAuth-Token", request.token.toString());
+    }
+    xhr.send(request.data);
+  }
 
-    public String getStatusText() {
-        return xhr.getStatusText();
-    }
+  public String getData() {
+    return xhr.getResponseText();
+  }
 
-    public int getStatusCode() {
-        return xhr.getStatus();
-    }
+  public String getStatusText() {
+    return xhr.getStatusText();
+  }
+
+  public int getStatusCode() {
+    return xhr.getStatus();
+  }
 }
