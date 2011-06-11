@@ -18,7 +18,7 @@ public class FusionTableService {
   
   private OAuthToken token;
 
-  public void setRequestToken(OAuthToken token) {
+  public void setAccessToken(OAuthToken token) {
     this.token = token;
   }
 

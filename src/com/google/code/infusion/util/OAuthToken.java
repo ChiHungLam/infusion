@@ -29,8 +29,11 @@ public class OAuthToken {
   public void parse(String s) {
     Map<String,String> parsed = new HashMap<String,String>();
     Util.parseParameters(s, parsed);
-    setToken(parsed.get("oauth_token"));
-    setTokenSecret(parsed.get("oauth_token_secret"));
+    token = parsed.get("oauth_token");
+    tokenSecret = parsed.get("oauth_token_secret");
+    if (token == null) {
+      throw new RuntimeException("Token not found in " + s);
+    }
   }
   
   public String toString() {
