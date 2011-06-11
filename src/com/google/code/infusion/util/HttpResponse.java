@@ -231,7 +231,6 @@ public class HttpResponse {
       buf.append(BASE64_CHARS[d & 63]);
       i += 3;
     }
-
     if (i == data.length - 2) {
       int d = ((((int) data[i]) & 0x0ff) << 16)
         | ((((int) data[i + 1]) & 255) << 8);
