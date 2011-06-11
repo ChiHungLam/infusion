@@ -5,6 +5,9 @@ import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+/** 
+ * Simple demo that accesses a public table and prints the contents.
+ */
 public class MiniDemo {
   public static void main(String[] args) {
     FusionTableService service = new FusionTableService();
