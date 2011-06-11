@@ -3,12 +3,11 @@ package com.google.code.infusion.shell;
 import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.net.URI;
 
 import com.google.code.infusion.service.FusionTableService;
@@ -37,12 +36,10 @@ public class Shell {
 
   private void init() {
     try {
-      BufferedReader tokenReader = new BufferedReader(new FileReader (TOKEN_FILE));
+      String tokenString = readFile(TOKEN_FILE);
       OAuthToken token = new OAuthToken();
-      token.setToken(tokenReader.readLine());
-      token.setTokenSecret(tokenReader.readLine());
+      token.parse(tokenString);
       service.setRequestToken(token);
-      tokenReader.close();
       System.out.println();
       if (token.getToken() == null || token.getTokenSecret() == null) {
         throw new NullPointerException("Token or token secret is empty");
@@ -98,21 +95,18 @@ public class Shell {
         try {
           uri = new URI(OAuthLogin.getAuthorizationUrl(requestToken));
           Desktop.getDesktop().browse(uri);
-          
           System.out.println("");
           System.out.print("Verification code: ");
           String verificationCode = reader.readLine();
         
           OAuthLogin.getAccessToken(requestToken, verificationCode, new SimpleCallback<OAuthToken>() {
-
             @Override
             public void onSuccess(OAuthToken result) {
               service.setRequestToken(result);
               
               try {
-                PrintWriter writer = new PrintWriter(new FileWriter(TOKEN_FILE));
-                writer.println(result.getToken());
-                writer.println(result.getTokenSecret());
+                Writer writer = new FileWriter(TOKEN_FILE);
+                writer.write(result.getToken().toString());
                 writer.close();
                 showPrompt();
               } catch(Exception e) {
