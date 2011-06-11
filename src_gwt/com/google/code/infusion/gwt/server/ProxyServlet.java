@@ -89,6 +89,7 @@ public class ProxyServlet extends HttpServlet{
         connection.setRequestProperty(name, value);
       }
     }
+    connection.setRequestProperty("X-Forwarded-For", request.getRemoteAddr());
     
     if (data.length > 0) {
       OutputStream os = connection.getOutputStream();

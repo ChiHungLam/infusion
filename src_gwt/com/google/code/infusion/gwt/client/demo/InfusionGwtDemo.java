@@ -8,6 +8,7 @@ import com.google.code.infusion.util.OAuthToken;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -16,7 +17,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 
@@ -98,14 +99,19 @@ public class InfusionGwtDemo implements EntryPoint {
     buttonPanel.add(submitButton);
     buttonPanel.add(clearButton);
     buttonPanel.add(authButton);
-    Anchor anchor = new Anchor("Developer Guide", "http://code.google.com/apis/fusiontables/docs/developers_guide.html");
-    anchor.setTarget("_blank");
-    buttonPanel.add(anchor);
+    
+    SimplePanel sp = new SimplePanel();
+    buttonPanel.add(sp);
+    Element element = sp.getElement();
+    element.getStyle().setDisplay(Display.INLINE);
+    element.setInnerHTML(
+        " <a href='http://code.google.com/apis/fusiontables/docs/developers_guide.html'" +
+        " target='blank_'>API Guide</a> <a href='http://code.google.com/p/infusion' " +
+        "target='blank_'>Infusion Homepage</a>");
 
     FormPanel formPanel = new FormPanel();
     mainPanel.addSouth(buttonPanel, 2);
-    mainPanel.addSouth(formPanel, 2);
-    
+    mainPanel.addSouth(formPanel, 2);    
     mainPanel.add(scrollPanel);
     
     RootLayoutPanel.get().add(mainPanel);
@@ -162,13 +168,10 @@ public class InfusionGwtDemo implements EntryPoint {
     scrollPanel.scrollToBottom();
   }
   
-  
   private void executeCommand() {
     String command = inputBox.getValue();
     println(command);
-    try {
     service.query(command, new SimpleCallback<Table>() {
-      
       @Override
       public void onSuccess(Table result) {
         
@@ -202,9 +205,6 @@ public class InfusionGwtDemo implements EntryPoint {
         println();
       }
     });
-    } catch(Exception e) {
-      println("Excption: " + e);
-    }
   }
 
   abstract class SimpleCallback<T> implements AsyncCallback<T>{
@@ -212,6 +212,4 @@ public class InfusionGwtDemo implements EntryPoint {
       println(error.toString());
     }
   }
-
-  
 }
