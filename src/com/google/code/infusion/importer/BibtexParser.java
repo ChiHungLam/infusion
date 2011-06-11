@@ -50,6 +50,13 @@ public class BibtexParser {
       "\u00fc", "\\\"{u}", "\u00fc", "{\\\"u}", "\u00fd", "\\'{y}", 
       "\u00ff", "\\\"{y}" };
 
+  /**
+   * Parses the bibtex file contained in the given string to a Table
+   * data structure.
+   * 
+   * @param bibtex the bibtex file content.
+   * @return A table containing the parsed bibtex data.
+   */
   public static Table parse(String bibtex) {
     BibtexParser parser = new BibtexParser(bibtex);
     
@@ -76,6 +83,7 @@ public class BibtexParser {
   }
 
   public static String toUnicode(String s) {
+    // TODO: Do something more reasonable here...
     if (s.indexOf('\\') != -1) {
       for (int i = 0; i < CODES.length; i += 2) {
         s = replace(s, CODES[i + 1], CODES[i]);

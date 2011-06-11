@@ -3,6 +3,9 @@ package com.google.code.infusion.util;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Stores the OAuth token and secret. Used for request and access tokens.
+ */
 public class OAuthToken {
   private String token;
   private String tokenSecret;
