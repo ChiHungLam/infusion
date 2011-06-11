@@ -11,15 +11,16 @@ import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -44,7 +45,7 @@ public class InfusionGwtDemo implements EntryPoint {
   public void onModuleLoad() {
     Document.get().getElementById("loading").removeFromParent();
 
-    String tokenCookie = Cookies.getCookie("token");
+    String tokenCookie = Cookies.getCookie("accessToken");
     if (tokenCookie != null) {
       token = new OAuthToken();
       token.parse(tokenCookie);
@@ -54,6 +55,11 @@ public class InfusionGwtDemo implements EntryPoint {
     
     String verificationCode = Window.Location.getParameter("oauth_verifier");
     if (verificationCode != null) {
+      tokenCookie = Cookies.getCookie("requestToken");
+      if (tokenCookie != null) {
+        token = new OAuthToken();
+        token.parse(tokenCookie);
+      }      
       if (token == null) {
         println("Missing request token for verifcation code.");
       } else if (!token.getToken().equals(Window.Location.getParameter("oauth_token"))) {
@@ -64,13 +70,16 @@ public class InfusionGwtDemo implements EntryPoint {
           @Override
           public void onSuccess(OAuthToken result) {
             println("Access token obtained successfully.");
-            Cookies.setCookie("token", result.toString());
+            Cookies.setCookie("accessToken", result.toString());
+            Cookies.setCookie("requestToken", "");
             service.setRequestToken(token);
+            println();
           }});
       }
     }
 
     println("Enter sql queries at the bottom of this page.");
+    println();
     DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
     FlowPanel buttonPanel = new FlowPanel();
     Button submitButton = new Button("Submit");
@@ -79,6 +88,9 @@ public class InfusionGwtDemo implements EntryPoint {
     buttonPanel.add(submitButton);
     buttonPanel.add(clearButton);
     buttonPanel.add(authButton);
+    Anchor anchor = new Anchor("Developer Guide", "http://code.google.com/apis/fusiontables/docs/developers_guide.html");
+    anchor.setTarget("_blank");
+    buttonPanel.add(anchor);
 
     FormPanel formPanel = new FormPanel();
     mainPanel.addSouth(buttonPanel, 2);
@@ -119,7 +131,7 @@ public class InfusionGwtDemo implements EntryPoint {
         OAuthLogin.getRequestToken(FusionTableService.SCOPE,  Document.get().getURL(), new SimpleCallback<OAuthToken>() {
           @Override
             public void onSuccess(final OAuthToken requestToken) {
-            Cookies.setCookie("token", requestToken.toString());
+            Cookies.setCookie("requestToken", requestToken.toString());
             Window.Location.assign(OAuthLogin.getAuthorizationUrl(requestToken));
           }
         });
@@ -142,24 +154,40 @@ public class InfusionGwtDemo implements EntryPoint {
   
   
   private void executeCommand() {
-    println(inputBox.getText());
-    service.query(inputBox.getText(), new SimpleCallback<Table>() {
+    String command = inputBox.getValue();
+    println(command);
+    service.query(command, new SimpleCallback<Table>() {
       
       @Override
       public void onSuccess(Table result) {
-        inputBox.setText("");
-        Grid grid = new Grid(result.getRows().length() + 1, result.getCols().length());
+        
+        SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        sb.appendHtmlConstant("<table>");
+        sb.appendHtmlConstant("<tr>");
         for (int i = 0; i < result.getCols().length(); i++) {
-          grid.setText(0, i, result.getCols().getString(i));
+          sb.appendHtmlConstant("<td>");
+          sb.appendHtmlConstant("<b>");
+          sb.appendEscaped(result.getCols().getString(i));
+          sb.appendHtmlConstant("</b>");
+          sb.appendHtmlConstant("</td>");
         }
+        sb.appendHtmlConstant("</tr>");
         for (int i = 0; i < result.getRows().length(); i++) {
+          sb.appendHtmlConstant("<tr>");
           JsonArray row = result.getRows().getArray(i);
           for (int j = 0; j < row.length(); j++) {
-            grid.setText(i+ 1, j, row.getString(j));
+            sb.appendHtmlConstant("<td>");
+            sb.appendEscaped(row.getString(j));
+            sb.appendHtmlConstant("</td>");
           }
+          sb.appendHtmlConstant("</tr>");
         }
+        sb.appendHtmlConstant("</table>");
         
-        outputPanel.add(grid);
+        Label label = new Label();
+        label.getElement().setInnerHTML(sb.toSafeHtml().asString());
+        
+        outputPanel.add(label);
         println();
       }
     });

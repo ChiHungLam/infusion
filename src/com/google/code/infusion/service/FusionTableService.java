@@ -73,6 +73,15 @@ public class FusionTableService {
     });
   }
 
+  private static String extractErrorMessage(String error) {
+    int start = error.indexOf("<TITLE>");
+    int end = error.indexOf("</TITLE>");
+    if (start != -1 && end != -1) {
+      error = error.substring(start + 7, end);
+    }
+    return error;
+  }
+  
 
   /**
    * Sends the given SQL command.
@@ -90,11 +99,10 @@ public class FusionTableService {
       method = HttpRequestBuilder.POST;
     }
     
-    
     HttpRequestBuilder request = new HttpRequestBuilder(method, url);
     request.setOAuthToken(token);
     request.setData(data);
-    request.send(new ChainedCallback<HttpResponse>(callback) {
+    request.send(new AsyncCallback<HttpResponse>() {
       public void onSuccess(HttpResponse response) {
         String data = response.getData();
         if (data.startsWith("callback")) {
@@ -107,13 +115,13 @@ public class FusionTableService {
               "{'cols':['result'],'rows':[[" + 
               Util.quote(data.trim(), '"', true) +"]]}")));
         } else {
-          int start = data.indexOf("<TITLE>");
-          int end = data.indexOf("</TITLE>");
-          if (start != -1 && end != -1) {
-            data = data.substring(start + 7, end);
-          }
-          callback.onFailure(new RuntimeException(data));
+          callback.onFailure(new RuntimeException(extractErrorMessage(data)));
         }
+      }
+
+      @Override
+      public void onFailure(Throwable error) {
+        callback.onFailure(new RuntimeException(extractErrorMessage(error.toString())));
       }
     });
   }
