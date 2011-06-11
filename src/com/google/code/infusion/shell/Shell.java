@@ -29,6 +29,8 @@ public class Shell {
   
   BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
   FusionTableService service = new FusionTableService();
+  boolean authenticating;
+  OAuthToken requestToken;
   
   public static void main(String[] args) throws IOException {
     new Shell().run();
@@ -39,11 +41,7 @@ public class Shell {
       String tokenString = readFile(TOKEN_FILE);
       OAuthToken token = new OAuthToken();
       token.parse(tokenString);
-      service.setRequestToken(token);
-      System.out.println();
-      if (token.getToken() == null || token.getTokenSecret() == null) {
-        throw new NullPointerException("Token or token secret is empty");
-      }
+      service.setAccessToken(token);
       System.out.println("Using existing authentication token");
       showPrompt();
     } catch (Exception e) {
@@ -59,6 +57,11 @@ public class Shell {
     while (true) {
       try {
         String cmd = reader.readLine();
+        if (requestToken != null) {
+          getAccessToken(requestToken, cmd);
+          requestToken = null;
+          continue;
+        } 
         String lcmd = cmd.toLowerCase();
         if ("exit".equals(lcmd) || "quit".equals(lcmd)) {
           break;
@@ -90,38 +93,46 @@ public class Shell {
   private void auth() {
     OAuthLogin.getRequestToken(FusionTableService.SCOPE, null, new SimpleCallback<OAuthToken>() {
       @Override
-      public void onSuccess(OAuthToken requestToken) {
-        URI uri;
+      public void onSuccess(OAuthToken token) {
         try {
-          uri = new URI(OAuthLogin.getAuthorizationUrl(requestToken));
+          URI uri = new URI(OAuthLogin.getAuthorizationUrl(token));
           Desktop.getDesktop().browse(uri);
+          requestToken = token;
           System.out.println("");
           System.out.print("Verification code: ");
-          String verificationCode = reader.readLine();
-        
-          OAuthLogin.getAccessToken(requestToken, verificationCode, new SimpleCallback<OAuthToken>() {
-            @Override
-            public void onSuccess(OAuthToken result) {
-              service.setRequestToken(result);
-              
-              try {
-                Writer writer = new FileWriter(TOKEN_FILE);
-                writer.write(result.getToken().toString());
-                writer.close();
-                showPrompt();
-              } catch(Exception e) {
-                showError("Saving Request Token failed:", e);
-              }
-            }
-          });
-          
         } catch (Exception e) {
-          showError(e);
+          showError("Opening Authentication page failed", e);
         }
       }
     });
   }
+  
+  private void getAccessToken(OAuthToken requestToken, String verificationCode) {
+    OAuthLogin.getAccessToken(requestToken, verificationCode, new AsyncCallback<OAuthToken>() {
+      @Override
+      public void onSuccess(OAuthToken accessToken) {
+        System.out.println("Token authenticated successfully.");
+        service.setAccessToken(accessToken);
+        
+        try {
+          Writer writer = new FileWriter(TOKEN_FILE);
+          writer.write(accessToken.toString());
+          writer.close();
+          System.out.println("Token saved successfully.");
+          showPrompt();
+        } catch(Exception e) {
+          showError("Saving Request Token failed:", e);
+        }
+      }
 
+      @Override
+      public void onFailure(Throwable error) {
+        showError("Obtaining access token failed", error);
+      }
+    });
+  }
+  
+  
   private static String readFile(String fileName) throws IOException {
     Reader reader = new InputStreamReader(new FileInputStream(fileName), "utf-8");
     char[] buf = new char[32768];

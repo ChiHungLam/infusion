@@ -49,7 +49,7 @@ public class InfusionGwtDemo implements EntryPoint {
     if (tokenCookie != null) {
       token = new OAuthToken();
       token.parse(tokenCookie);
-      service.setRequestToken(token);
+      service.setAccessToken(token);
       println("Token loaded from cookies.");
     }
     
@@ -72,7 +72,7 @@ public class InfusionGwtDemo implements EntryPoint {
             println("Access token obtained successfully.");
             Cookies.setCookie("accessToken", result.toString());
             Cookies.setCookie("requestToken", "");
-            service.setRequestToken(token);
+            service.setAccessToken(token);
             println();
           }});
       }

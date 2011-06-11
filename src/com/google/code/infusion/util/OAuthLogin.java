@@ -7,7 +7,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  */
 public class OAuthLogin {
 
-  public static String BASE_URL = "https://www.google.com/accounts/";
+  public static final String BASE_URL = "https://www.google.com/accounts/";
 
   /**
    * Step 1 of OAuth 1.0 authentication: Requests a request token for
@@ -41,7 +41,7 @@ public class OAuthLogin {
 
   /**
    * Construct the URL for the second step of OAuth authentication.
-   * Open a browser with this URL to enable the user to authenticate
+   * Open a browser with this URL to enable the user to authorize
    * the request. If successful, the verification code will be printed
    * or sent to the URL provided in the first step.
    * 
