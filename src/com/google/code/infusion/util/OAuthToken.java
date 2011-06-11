@@ -26,14 +26,15 @@ public class OAuthToken {
     this.tokenSecret = secret;
   }
 
-  public void parse(String s) {
+  /**
+   * Returns false if oauth_token was not found in the parsed string.
+   */
+  public boolean parse(String s) {
     Map<String,String> parsed = new HashMap<String,String>();
     Util.parseParameters(s, parsed);
     token = parsed.get("oauth_token");
     tokenSecret = parsed.get("oauth_token_secret");
-    if (token == null) {
-      throw new RuntimeException("Token not found in " + s);
-    }
+    return token != null;
   }
   
   public String toString() {
