@@ -1,47 +1,55 @@
 package com.google.code.infusion.importer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.service.Table;
 
 /**
+ * Parser for tables in CSV format. 
+ * 
  * @author Stefan Haustein
  */
-public class CsvParser implements Iterator<Map<String, String>> {
+public class CsvParser {
   static final String EOL = "<EOL>";
   static final String EOF = "<EOF>";
 
   protected LookAheadReader reader;
   protected char commentsChar;
-  private ArrayList<String> columnNames;
-  
-  private Map<String,String> current;
+  private JsonArray cols;
 
   /**
-   * If there is no header row, it is necessary to read the first data row in
-   * order to determine the column count. In that case, the content of the first
-   * row is stored in the variable row0.
+   * Parses the given string as a table in CSV format and returns
+   * the corresponding table object.
+   * 
+   * @param csv the CSV file content as a string
+   * @param hasTitles Set to true to indicate that the first row should 
+   *   be interpreted as titles. Otherwise, the columns will be named
+   *   col1...colN
+   * @return The parsed table
    */
-
-  public CsvParser(String csv, boolean titleLine) {
-    this.reader = new LookAheadReader(csv);
-
-    if (titleLine) {
-      while (true) {
-        String o = readColumn();
-        if (o == EOL || o == EOF) {
-          break;
-        }
-
-        columnNames.add(o.toString());
+  public Table parse(String csv, boolean hasTitles) {
+    CsvParser parser = new CsvParser(csv, hasTitles);
+    JsonArray rows = JsonArray.create();
+    while (true) {
+      JsonArray row = parser.readRow();
+      if (row == null) {
+        break;
       }
+      rows.setArray(rows.length(), row);
+    }
+    return new Table(parser.cols, rows);
+  }
+
+  private CsvParser(String csv, boolean titleLine) {
+    this.reader = new LookAheadReader(csv);
+    if(titleLine) {
+      cols = readRow();
+    } else {
+      cols = JsonArray.create();
     }
   }
 
-  public Map<String, String> readRow() {
-    Map<String, String> result = new HashMap<String, String>();
+  public JsonArray readRow() {
+    JsonArray row = JsonArray.create();
 
     String val = null;
     int i = 0;
@@ -54,21 +62,23 @@ public class CsvParser implements Iterator<Map<String, String>> {
         break;
       }
 
-      result.put(i < columnNames.size() ? columnNames.get(i) : ("col" + i), val);
+      row.setString(i, val);
+      if (i > cols.length()) {
+        cols.setString(i, "col" + i);
+      }
       i++;
     }
-    return result;
+    return row;
   }
 
-  
-  void skip() {
+
+  private void skip() {
     while (reader.peek(0) == ' ' || reader.peek(0) == '\t') {
       reader.read();
     }
   }
 
-  
-  String readColumn() {
+  private String readColumn() {
     while (reader.peek(0) == commentsChar)
       reader.readLine();
 
@@ -104,7 +114,6 @@ public class CsvParser implements Iterator<Map<String, String>> {
     }
   }
 
-  
   String readQuoted() {
     reader.read();
 
@@ -121,29 +130,5 @@ public class CsvParser implements Iterator<Map<String, String>> {
     } while (reader.peek(0) == '"');
 
     return buf.toString();
-  }
-
-  @Override
-  public boolean hasNext() {
-    if (current != null) {
-      return true;
-    }
-    current = readRow();
-    return current != null;
-  }
-
-  @Override
-  public Map<String, String> next() {
-    if (!hasNext()) {
-      throw new NoSuchElementException();
-    }
-    Map<String,String> result = current;
-    current = null;
-    return result;
-  }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException();
   }
 }
