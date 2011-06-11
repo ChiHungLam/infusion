@@ -40,12 +40,14 @@ public class Shell {
     try {
       String tokenString = readFile(TOKEN_FILE);
       OAuthToken token = new OAuthToken();
-      token.parse(tokenString);
+      if (!token.parse(tokenString)) {
+        throw new RuntimeException("Empty token");
+      }
       service.setAccessToken(token);
-      System.out.println("Using existing authentication token");
+      System.out.println("Using existing access token");
       showPrompt();
     } catch (Exception e) {
-      showError("Readin authentication token failed", e);
+      showError("Reading access token failed", e);
     }
   }
   

@@ -13,13 +13,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.code.infusion.util.HttpResponse;
+import com.google.code.infusion.util.OAuthLogin;
 import com.google.code.infusion.util.OAuthToken;
 
 @SuppressWarnings("serial")
 public class ProxyServlet extends HttpServlet{
 
   private final String[] URL_WHITELIST = {
-      "https://www.google.com/",
+      OAuthLogin.BASE_URL,
       "https://www.google.com/fusiontables/api/query"
   };
 

@@ -7,6 +7,7 @@ import com.google.code.infusion.util.OAuthLogin;
 import com.google.code.infusion.util.OAuthToken;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,49 +33,58 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
  */
 public class InfusionGwtDemo implements EntryPoint {
 
-  private FusionTableService service = new FusionTableService();
+  private static final String REQUEST_TOKEN_COOKIE = "requestToken";
+  private static final String ACCESS_TOKEN_COOKIE = "accessToken";
 
-  FlowPanel outputPanel = new FlowPanel();
-  TextBox inputBox = new TextBox();
-  ScrollPanel scrollPanel = new ScrollPanel(outputPanel);
-  OAuthToken token;
+  private FusionTableService service = new FusionTableService();
+  
+  private FlowPanel outputPanel = new FlowPanel();
+  private TextBox inputBox = new TextBox();
+  private ScrollPanel scrollPanel = new ScrollPanel(outputPanel);
   
   /**
    * This is the entry point method.
    */
   public void onModuleLoad() {
-    Document.get().getElementById("loading").removeFromParent();
+    Element loading = Document.get().getElementById("loading");
+    if (loading != null) {
+      loading.removeFromParent();
+    }
 
-    String tokenCookie = Cookies.getCookie("accessToken");
-    if (tokenCookie != null) {
-      token = new OAuthToken();
-      token.parse(tokenCookie);
-      service.setAccessToken(token);
-      println("Token loaded from cookies.");
+    { // Keep accessToken local here
+      OAuthToken accessToken = new OAuthToken();
+      if (accessToken.parse(Cookies.getCookie("accessToken"))) {
+        println("Access token loaded from cookies.");
+        service.setAccessToken(accessToken);
+      } else {
+        println("Access token cookie not found or empty.");
+        accessToken = null;
+      }
     }
     
     String verificationCode = Window.Location.getParameter("oauth_verifier");
     if (verificationCode != null) {
-      tokenCookie = Cookies.getCookie("requestToken");
-      if (tokenCookie != null) {
-        token = new OAuthToken();
-        token.parse(tokenCookie);
-      }      
-      if (token == null) {
+      OAuthToken requestToken = new OAuthToken();
+      if (!requestToken.parse(Cookies.getCookie("requestToken"))) {
         println("Missing request token for verifcation code.");
-      } else if (!token.getToken().equals(Window.Location.getParameter("oauth_token"))) {
-        println("Token mismatch; expected: " + token.getToken());
+      } else if (!requestToken.getToken().equals(Window.Location.getParameter("oauth_token"))) {
+        println("Token mismatch; expected: " + requestToken.getToken());
       } else {
         println("Upgrading request token to access token.");
-        OAuthLogin.getAccessToken(token, verificationCode, new SimpleCallback<OAuthToken>() {
+        OAuthLogin.getAccessToken(requestToken, verificationCode, new AsyncCallback<OAuthToken>() {
           @Override
-          public void onSuccess(OAuthToken result) {
-            println("Access token obtained successfully.");
-            Cookies.setCookie("accessToken", result.toString());
+          public void onSuccess(OAuthToken accessToken) {
+            println("Access token obtained successfully, storing in cookie.");
+            Cookies.setCookie("accessToken", accessToken.toString());
             Cookies.setCookie("requestToken", "");
-            service.setAccessToken(token);
+            service.setAccessToken(accessToken);
             println();
-          }});
+          }
+          public void onFailure(Throwable e) {
+            println("Obtaining access token failed: " + e.toString());
+            println();
+          }
+        });
       }
     }
 

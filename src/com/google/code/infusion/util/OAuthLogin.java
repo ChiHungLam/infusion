@@ -34,8 +34,12 @@ public class OAuthLogin {
       @Override
       public void onSuccess(HttpResponse result) {
         OAuthToken token = new OAuthToken();
-        token.parse(result.getData());
-        callback.onSuccess(token);
+        if (token.parse(result.getData())) {
+          callback.onSuccess(token);
+        } else {
+          callback.onFailure(new RuntimeException(
+              "Request token not found in response: " + result.getData()));
+        }
       }});
   }
 
@@ -73,8 +77,12 @@ public class OAuthLogin {
       @Override
       public void onSuccess(HttpResponse result) {
         OAuthToken token = new OAuthToken();
-        token.parse(result.getData());
-        callback.onSuccess(token);
+        if (token.parse(result.getData())) {
+          callback.onSuccess(token);
+        } else {
+          callback.onFailure(new RuntimeException(
+              "Access token not found in response: " + result.getData()));
+        }
       }});
     
   }
