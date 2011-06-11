@@ -70,11 +70,7 @@ public class BibtexParser {
     }
     return new Table(parser.cols, rows);
   }
-  
-  
-  private BibtexParser(String bibtex) {
-    this.reader = new LookAheadReader(bibtex);
-  }
+
 
   private static String replace(String src, String replace, String by) {
     int i = src.indexOf(replace);
@@ -82,7 +78,7 @@ public class BibtexParser {
         src.substring(i + replace.length()), replace, by));
   }
 
-  public static String toUnicode(String s) {
+  private static String toUnicode(String s) {
     // TODO: Do something more reasonable here...
     if (s.indexOf('\\') != -1) {
       for (int i = 0; i < CODES.length; i += 2) {
@@ -91,6 +87,12 @@ public class BibtexParser {
     }
     return s;
   }
+
+
+  private BibtexParser(String bibtex) {
+    this.reader = new LookAheadReader(bibtex);
+  }
+
 
   private int index(String key) {
     Integer i = map.get(key);
