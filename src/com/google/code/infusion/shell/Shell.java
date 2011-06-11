@@ -20,6 +20,11 @@ import com.google.code.infusion.util.OAuthToken;
 import com.google.code.infusion.util.Util;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+/**
+ * Simple desktop Java usage example for FusionTableService.
+ * 
+ * @author Stefan Haustein
+ */
 public class Shell {
   static final String TOKEN_FILE = ".token";
   

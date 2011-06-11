@@ -14,23 +14,28 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 public class FusionTableService {
 
   private static String BASE_URL = "https://www.google.com/fusiontables/api/query";
-    
   public static String SCOPE = BASE_URL;
   
   private OAuthToken token;
-
-  public FusionTableService() {
-  }
 
   public void setRequestToken(OAuthToken token) {
     this.token = token;
   }
 
+  /**
+   * Insert the data from the given table into the table with the given
+   * table id.
+   * 
+   * @param tableId to insert into 
+   * @param data data to insert
+   * @param callback will be called when the data is inserted.
+   */
   public void insert(String tableId, Table data, AsyncCallback<Table> callback) {
     insert(tableId, data, 0, callback);
   }
   
-  private void insert(final String tableId, final Table data, int offset, final AsyncCallback<Table> callback) {
+  private void insert(final String tableId, final Table data, int offset, 
+      final AsyncCallback<Table> callback) {
     StringBuilder sb = new StringBuilder();
     final int end = offset + Math.min(100, data.getRows().length() - offset);
     for (int r = offset; r < end; r++) {
@@ -73,11 +78,15 @@ public class FusionTableService {
     });
   }
 
+  /**
+   * Extract the error message from the title element of the given
+   * HTML fragment. If not found, the whole string is returned.
+   */
   private static String extractErrorMessage(String error) {
     int start = error.indexOf("<TITLE>");
     int end = error.indexOf("</TITLE>");
     if (start != -1 && end != -1) {
-      error = error.substring(start + 7, end);
+      error = Util.xmlDecode(error.substring(start + 7, end));
     }
     return error;
   }

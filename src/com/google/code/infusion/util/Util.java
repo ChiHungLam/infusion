@@ -5,7 +5,12 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Map;
 
+/**
+ * A collection of utility methods, mainly for escaping.
+ */
 public class Util {
+  
+  static final String HEX_DIGITS = "0123456789ABCDEF";
 
   public static String quote(String value, char quoteChar, boolean force) {
     StringBuilder sb;
@@ -163,7 +168,49 @@ public class Util {
     }
   }
 
-  static final String HEX_DIGITS = "0123456789ABCDEF";
+  public static String xmlDecode(String s) {
+    int pos = 0;
+    StringBuilder sb = new StringBuilder();
+    while (true) {
+      int start = s.indexOf('&', pos);
+      if (start == -1) {
+        break;
+      }
+      int end = s.indexOf(';', start);
+      if (end == -1) {
+        break;
+      } 
+      sb.append(s.substring(pos, start));
+      String entity = s.substring(start + 1, end);
+      try {
+        if (entity.startsWith("#x") || entity.startsWith("#X")) {
+          sb.append((char) Integer.parseInt(entity.substring(2), 16));
+        } else if (entity.startsWith("#")) {
+          sb.append((char) Integer.parseInt(entity.substring(1)));
+        } else if ("amp".equals(entity)) {
+          sb.append('&');
+        } else if ("gt".equals(entity)) {
+          sb.append('>');
+        } else if ("lt".equals(entity)) {
+          sb.append('<');
+        } else if ("quot".equals(entity)) {
+          sb.append('"');
+        } else {
+          throw new RuntimeException("Unrecognized entity");
+        }
+      } catch(Exception e) {
+        sb.append('&');
+        sb.append(entity);
+        sb.append(';');
+      }
+      pos = end + 1;
+    }
+    if (pos == 0) {
+      return s;
+    } 
+    sb.append(s.substring(pos));
+    return sb.toString();
+  }
 
  /* public static String urlEncode(String url) {
     try {
