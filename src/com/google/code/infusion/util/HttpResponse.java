@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -102,6 +103,54 @@ public class HttpResponse {
   }
 
   
+  private static String oAuthUrlEncode(String s) {
+    byte[] b;
+    try {
+      b = s.getBytes("utf-8");
+  
+    int len = b.length;
+    StringBuilder sb = new StringBuilder(len * 3 / 2);
+    for (int i = 0; i < len; i++) {
+      char c = (char) (b[i] & 255);
+      if ((c >= '0' && c <= '9') || 
+          (c >= 'A' && c <= 'Z') ||
+          (c >= 'a' && c <= 'z') || 
+          c == '_' || c == '.' || c == '~' || c == '-') {
+        sb.append(c);
+      } else {
+        sb.append('%');
+        sb.append(Util.HEX_DIGITS.charAt(c / 16));
+        sb.append(Util.HEX_DIGITS.charAt(c % 16));
+      }
+    }
+    return sb.toString();
+    } catch (UnsupportedEncodingException e) {
+     throw new RuntimeException(e);
+    }
+  }
+
+  private static String oAuthUrlDecode(String s) {
+    int len = s.length();
+    byte[] b = new byte[len];
+    int pos = 0;
+    for (int i = 0; i < len; i++) {
+      char c = s.charAt(i);
+      if (c == '%') {
+        b[pos++] = (byte) Integer.parseInt(s.substring(i+1, i+3), 16);
+        i+=2;
+      } else if (c == '+') {
+        b[pos++] = 32;
+      } else {
+        b[pos++] = (byte) c;
+      }
+    }
+    try {
+      return new String(b, 0, pos, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+     throw new RuntimeException(e);
+    }
+  }
+
   public static byte[] hmacSha1(String text, String key) {
     try {
       Mac mac = Mac.getInstance("HmacSHA1");
@@ -130,7 +179,7 @@ public class HttpResponse {
       "&oauth_timestamp="+ (System.currentTimeMillis() / 1000) +
       "&oauth_versiom=1.0";
     if (token != null && token.getToken() != null) {
-      url += "&oauth_token=" + Util.urlEncode(token.getToken());
+      url += "&oauth_token=" + HttpResponse.oAuthUrlEncode(token.getToken());
     }
     
     Util.parseParameters(url.substring(cut + 1), params);
@@ -146,21 +195,21 @@ public class HttpResponse {
       }
       result.append(e.getKey());
       result.append('=');
-      result.append(Util.urlEncode(e.getValue()));
+      result.append(HttpResponse.oAuthUrlEncode(e.getValue()));
     }
     
-    String base = method + "&" + Util.urlEncode(url.substring(0, cut)) + '&' + Util.urlEncode(result.toString());
+    String base = method + "&" + HttpResponse.oAuthUrlEncode(url.substring(0, cut)) + '&' + HttpResponse.oAuthUrlEncode(result.toString());
       
 //    System.out.println("Base: "+ base);
       
     String key = "anonymous&";
     if (token != null && token.getTokenSecret() != null) {
-      key += Util.urlEncode(token.getTokenSecret());
+      key += HttpResponse.oAuthUrlEncode(token.getTokenSecret());
     }
     String hash = encodeBase64(hmacSha1(base, key));
   
      // System.out.println("hash:"+ hash);
-    return url +  "&oauth_signature=" + Util.urlEncode(hash);
+    return url +  "&oauth_signature=" + HttpResponse.oAuthUrlEncode(hash);
   }
 
   
@@ -172,7 +221,6 @@ public class HttpResponse {
     StringBuilder buf  = new StringBuilder(data.length * 3 / 2);
     int end = data.length - 3;
     int i = 0;
-    int n = 0;
     while (i <= end) {
       int d = ((((int) data[i]) & 0x0ff) << 16)
         | ((((int) data[i + 1]) & 0x0ff) << 8)

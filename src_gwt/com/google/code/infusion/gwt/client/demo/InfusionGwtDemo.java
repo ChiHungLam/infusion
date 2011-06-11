@@ -166,6 +166,7 @@ public class InfusionGwtDemo implements EntryPoint {
   private void executeCommand() {
     String command = inputBox.getValue();
     println(command);
+    try {
     service.query(command, new SimpleCallback<Table>() {
       
       @Override
@@ -201,7 +202,9 @@ public class InfusionGwtDemo implements EntryPoint {
         println();
       }
     });
-
+    } catch(Exception e) {
+      println("Excption: " + e);
+    }
   }
 
   abstract class SimpleCallback<T> implements AsyncCallback<T>{
