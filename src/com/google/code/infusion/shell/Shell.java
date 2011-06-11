@@ -62,6 +62,7 @@ public class Shell {
           break;
         } else if ("?".equals(lcmd) || "help".equals(lcmd)) {
           showHelp();
+          showPrompt();
         } else if (lcmd.equals("auth")) {
           auth();
         } else if (cmd.startsWith("import ")) {
@@ -206,20 +207,22 @@ public class Shell {
   private void showError(Throwable caught) {
     showError(null, caught);
   }
-  
+
   private void showError(String message, Throwable caught) {
     System.out.println();
     if (message != null) {
       System.out.println(message);
     }
-    caught.printStackTrace(System.out);
+    if (caught != null) {
+      caught.printStackTrace(System.out);
+    }
     showPrompt();
   }
   
   abstract class SimpleCallback<T> implements AsyncCallback<T> {
     @Override
     public void onFailure(Throwable error) {
-      showError(error);
+      showError(error.getMessage(), null);
     }
   }
 }
