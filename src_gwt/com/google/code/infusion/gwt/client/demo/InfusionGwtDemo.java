@@ -30,7 +30,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 
 /**
- * Entry point classes define <code>onModuleLoad()</code>.
+ * Fusion table GWT client demo. Displays a command line and
+ * sends commands to the FT API.
  */
 public class InfusionGwtDemo implements EntryPoint {
 
@@ -54,7 +55,7 @@ public class InfusionGwtDemo implements EntryPoint {
 
     { // Keep accessToken local here
       OAuthToken accessToken = new OAuthToken();
-      if (accessToken.parse(Cookies.getCookie("accessToken"))) {
+      if (accessToken.parse(Cookies.getCookie(ACCESS_TOKEN_COOKIE))) {
         println("Access token loaded from cookies.");
         service.setAccessToken(accessToken);
       } else {
@@ -66,7 +67,7 @@ public class InfusionGwtDemo implements EntryPoint {
     String verificationCode = Window.Location.getParameter("oauth_verifier");
     if (verificationCode != null) {
       OAuthToken requestToken = new OAuthToken();
-      if (!requestToken.parse(Cookies.getCookie("requestToken"))) {
+      if (!requestToken.parse(Cookies.getCookie(REQUEST_TOKEN_COOKIE))) {
         println("Missing request token for verifcation code.");
       } else if (!requestToken.getToken().equals(Window.Location.getParameter("oauth_token"))) {
         println("Token mismatch; expected: " + requestToken.getToken());
@@ -76,8 +77,8 @@ public class InfusionGwtDemo implements EntryPoint {
           @Override
           public void onSuccess(OAuthToken accessToken) {
             println("Access token obtained successfully, storing in cookie.");
-            Cookies.setCookie("accessToken", accessToken.toString());
-            Cookies.setCookie("requestToken", "");
+            Cookies.setCookie(ACCESS_TOKEN_COOKIE, accessToken.toString());
+            Cookies.setCookie(REQUEST_TOKEN_COOKIE, "");
             service.setAccessToken(accessToken);
             println();
           }
@@ -147,7 +148,7 @@ public class InfusionGwtDemo implements EntryPoint {
         OAuthLogin.getRequestToken(FusionTableService.SCOPE,  Document.get().getURL(), new SimpleCallback<OAuthToken>() {
           @Override
             public void onSuccess(final OAuthToken requestToken) {
-            Cookies.setCookie("requestToken", requestToken.toString());
+            Cookies.setCookie(REQUEST_TOKEN_COOKIE, requestToken.toString());
             Window.Location.assign(OAuthLogin.getAuthorizationUrl(requestToken));
           }
         });
@@ -170,6 +171,11 @@ public class InfusionGwtDemo implements EntryPoint {
   
   private void executeCommand() {
     String command = inputBox.getValue();
+    String lcmd = command.trim().toLowerCase();
+    if (lcmd.startsWith("select") && lcmd.indexOf("limit") == -1) {
+      command += " limit 100";
+    }
+    
     println(command);
     service.query(command, new SimpleCallback<Table>() {
       @Override
