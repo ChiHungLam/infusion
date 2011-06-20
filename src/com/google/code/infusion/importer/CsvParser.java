@@ -26,7 +26,7 @@ public class CsvParser {
    *   col1...colN
    * @return The parsed table
    */
-  public Table parse(String csv, boolean hasTitles) {
+  public static Table parse(String csv, boolean hasTitles) {
     CsvParser parser = new CsvParser(csv, hasTitles);
     JsonArray rows = JsonArray.create();
     while (true) {
