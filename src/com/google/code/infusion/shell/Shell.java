@@ -12,6 +12,7 @@ import java.net.URI;
 
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.importer.BibtexParser;
+import com.google.code.infusion.importer.CsvParser;
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.service.Table;
 import com.google.code.infusion.util.OAuthLogin;
@@ -156,8 +157,7 @@ public class Shell {
     if (fileName.endsWith(".bib")) {
       table = BibtexParser.parse(data);
     } else {
-      throw new RuntimeException("");
-      //parser = new CsvParser(data, true);
+      table = CsvParser.parse(data, true);
     }
     
     String name = fileName;
