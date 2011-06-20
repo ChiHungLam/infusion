@@ -1,0 +1,21 @@
+
+syntax: regexp
+^\.classpath$
+syntax: regexp
+^\.project$
+syntax: regexp
+^war/infusion/gwt$
+syntax: regexp
+^war/infusiondemo$
+syntax: regexp
+^war/WEB-INF/deploy$
+syntax: regexp
+^war/WEB-INF/lib$
+syntax: regexp
+^\.settings$
+syntax: regexp
+^src/META-INF$
+syntax: regexp
+^src/log4j\.properties$
+syntax: regexp
+^\.gwt$

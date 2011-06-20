@@ -1,0 +1,8 @@
+com.google.code.infusion.gwt.client.demo
+com.google.code.infusion.gwt.server
+com.google.code.infusion.importer
+com.google.code.infusion.json
+com.google.code.infusion.service
+com.google.code.infusion.shell
+com.google.code.infusion.util
+com.google.gwt.user.client.rpc
