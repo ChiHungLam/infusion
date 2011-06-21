@@ -74,7 +74,7 @@ public class Shell {
         } else if (lcmd.equals("auth")) {
           auth();
         } else if (cmd.startsWith("import ")) {
-          importFile(cmd.substring(7));
+          importFile(cmd.substring(7).split(" "));
         } else {
           service.query(cmd, new SimpleCallback<Table>() {
             @Override
@@ -151,7 +151,19 @@ public class Shell {
   }
   
   
-  private void importFile(String fileName) throws IOException {
+  private void importFile(String[] param) throws IOException {
+    String tableId = null;
+    String fileName = null;
+    for(int i = 0; i < param.length; i += 2) {
+      String name = param[i];
+      String value = param[i + 1];
+      if (name.equals("file")) {
+        fileName = value;
+      } else if (name.equals("into")) {
+        tableId = value;
+      }
+    }
+    
     String data = readFile(fileName);
     final Table table;
     if (fileName.endsWith(".bib")) {
@@ -160,52 +172,65 @@ public class Shell {
       table = CsvParser.parse(data, true);
     }
     
-    String name = fileName;
-    int cut = name.lastIndexOf('/');
-    if (cut != -1) {
-      name = name.substring(cut + 1);
-    }
-    cut = name.lastIndexOf('.');
-    if (cut != -1) {
-      name = name.substring(0, cut);
-    }
     
-    StringBuilder sb = new StringBuilder("CREATE TABLE ");
-    sb.append(Util.singleQuote(name));
-    sb.append(" (");
-    for (int i = 0; i < table.getCols().length(); i++) {
-      if (i != 0) {
-        sb.append(',');
+    if (tableId != null) {
+      service.insert(tableId, table, new SimpleCallback<Table>() {
+        @Override
+        public void onSuccess(Table result) {
+          System.out.println("" + result.getRows().length() + " rows inserted.");
+          showPrompt();
+        }
+      });
+      
+    } else {
+      String name = fileName;
+      int cut = name.lastIndexOf('/');
+      if (cut != -1) {
+        name = name.substring(cut + 1);
       }
-      sb.append(Util.singleQuote(table.getCols().getString(i)));
-      sb.append(":STRING");
+      cut = name.lastIndexOf('.');
+      if (cut != -1) {
+        name = name.substring(0, cut);
+      }
+      StringBuilder sb = new StringBuilder("CREATE TABLE ");
+      sb.append(Util.singleQuote(name));
+      sb.append(" (");
+      for (int i = 0; i < table.getCols().length(); i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+        sb.append(Util.singleQuote(table.getCols().getString(i)));
+        sb.append(":STRING");
+      }
+      sb.append(')');
+      service.query(sb.toString(), new SimpleCallback<Table>() {
+        public void onSuccess(Table result) {
+          String tableId = result.getRows().getArray(0).getString(0);
+          service.insert(tableId, table, new SimpleCallback<Table>() {
+            @Override
+            public void onSuccess(Table result) {
+              System.out.println("" + result.getRows().length() + " rows inserted.");
+              showPrompt();
+            }
+          });
+        }
+      });
     }
-    sb.append(')');
-    service.query(sb.toString(), new SimpleCallback<Table>() {
-      public void onSuccess(Table result) {
-        String tableId = result.getRows().getArray(0).getString(0);
-        service.insert(tableId, table, new SimpleCallback<Table>() {
-          @Override
-          public void onSuccess(Table result) {
-            System.out.println("" + result.getRows().length() + " entities updated / inserted.");
-            showPrompt();
-          }
-        });
-      }
-    });
   }
 
   private void showHelp() {
     System.out.println();
     System.out.println("Shell Commands");
-    System.out.println("  auth:               Authenticate client");
-    System.out.println("  exit:               Quit FT demo");
-    System.out.println("  help:               Show this help screen");
-    System.out.println("  import <filename>   Import a bibtex or CSV file");
+    System.out.println("  auth         Authenticate client");
+    System.out.println("  exit         Quit FT demo");
+    System.out.println("  help         Show this help screen");
+    System.out.println("  import file <filename> [into <tableId>]");
+    System.out.println("               Import a bibtex or CSV file");
     System.out.println();
     System.out.println("Fusion Table query examples");
-    System.out.println("  select * from 197026   Display contents of table 197026");
-    System.out.println("  show tables            List available tables*");
+    System.out.println("  select * from 197026");
+    System.out.println("               Display contents of table 197026");
+    System.out.println("  show tables  List available tables*");
     System.out.println("");
     System.out.println("*) Requies authentication");
   }
