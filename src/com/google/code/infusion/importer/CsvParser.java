@@ -15,6 +15,7 @@ public class CsvParser {
   protected LookAheadReader reader;
   protected char commentsChar;
   private JsonArray cols;
+  private char delimiter;
 
   /**
    * Parses the given string as a table in CSV format and returns
@@ -26,8 +27,8 @@ public class CsvParser {
    *   col1...colN
    * @return The parsed table
    */
-  public static Table parse(String csv, boolean hasTitles) {
-    CsvParser parser = new CsvParser(csv, hasTitles);
+  public static Table parse(String csv, boolean hasTitles, char delimiter) {
+    CsvParser parser = new CsvParser(csv, hasTitles, delimiter);
     JsonArray rows = JsonArray.create();
     while (true) {
       JsonArray row = parser.readRow();
@@ -39,7 +40,7 @@ public class CsvParser {
     return new Table(parser.cols, rows);
   }
 
-  private CsvParser(String csv, boolean titleLine) {
+  private CsvParser(String csv, boolean titleLine, char delimiter) {
     this.reader = new LookAheadReader(csv);
     if(titleLine) {
       cols = readRow();
@@ -86,31 +87,36 @@ public class CsvParser {
     // reader.skip(" \t");
     skip();
     int c = reader.peek(0);
-    switch (c) {
-    case '"':
-      result = readQuoted();
-      // reader.skip(" \t");
-      skip();
-      if (reader.peek(0) == ',')
-        reader.read();
-      return result;
-
-    case '\r':
-      if (reader.peek(0) == '\n')
-        reader.read();
-    case '\n':
-      reader.read();
-      return EOL;
-    case -1:
-      return EOF;
-    case ',':
+    if (c == delimiter) {
       reader.read();
       return null;
-    default:
-      result = reader.readTo(",\n\r").trim();
-      if (reader.peek(0) == ',')
+    } else {
+      switch (c) {
+      case '"':
+        result = readQuoted();
+        // reader.skip(" \t");
+        skip();
+        if (reader.peek(0) == delimiter)
+          reader.read();
+        return result;
+
+      case '\r':
+        if (reader.peek(0) == '\n')
+          reader.read();
+      case '\n':
         reader.read();
-      return result;
+        return EOL;
+      case -1:
+        return EOF;
+      case ',':
+        reader.read();
+        return null;
+      default:
+        result = reader.readTo(",\n\r").trim();
+        if (reader.peek(0) == ',')
+          reader.read();
+        return result;
+      }
     }
   }
 

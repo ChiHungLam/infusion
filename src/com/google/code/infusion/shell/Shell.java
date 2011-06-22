@@ -154,6 +154,7 @@ public class Shell {
   private void importFile(String[] param) throws IOException {
     String tableId = null;
     String fileName = null;
+    char delimiter = ',';
     for(int i = 0; i < param.length; i += 2) {
       String name = param[i];
       String value = param[i + 1];
@@ -161,6 +162,12 @@ public class Shell {
         fileName = value;
       } else if (name.equals("into")) {
         tableId = value;
+      } else if (name.equals("delimiter")) {
+        if (value.length() != 1) {
+          showError("Delimiter must be a single character", null);
+          return;
+        }
+        delimiter = value.charAt(0);
       }
     }
     
@@ -169,7 +176,7 @@ public class Shell {
     if (fileName.endsWith(".bib")) {
       table = BibtexParser.parse(data);
     } else {
-      table = CsvParser.parse(data, true);
+      table = CsvParser.parse(data, true, delimiter);
     }
     
     
@@ -224,8 +231,8 @@ public class Shell {
     System.out.println("  auth         Authenticate client");
     System.out.println("  exit         Quit FT demo");
     System.out.println("  help         Show this help screen");
-    System.out.println("  import file <filename> [into <tableId>]");
-    System.out.println("               Import a bibtex or CSV file");
+    System.out.println("  import file <filename> [into <tableId>] [delimiter <delimiter>]");
+    System.out.println("               Import a bibtex or CSV file.");
     System.out.println();
     System.out.println("Fusion Table query examples");
     System.out.println("  select * from 197026");
