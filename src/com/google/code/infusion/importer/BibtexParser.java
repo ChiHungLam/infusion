@@ -3,7 +3,7 @@ package com.google.code.infusion.importer;
 import java.util.HashMap;
 
 import com.google.code.infusion.json.JsonArray;
-import com.google.code.infusion.service.Table;
+import com.google.code.infusion.service.SimpleTable;
 
 /**
  * Parses a BibTex file to a Table.
@@ -57,7 +57,7 @@ public class BibtexParser {
    * @param bibtex the bibtex file content.
    * @return A table containing the parsed bibtex data.
    */
-  public static Table parse(String bibtex) {
+  public static SimpleTable parse(String bibtex) {
     BibtexParser parser = new BibtexParser(bibtex);
     
     JsonArray rows = JsonArray.create();
@@ -68,7 +68,7 @@ public class BibtexParser {
       }
       rows.setArray(rows.length(), row);
     }
-    return new Table(parser.cols, rows);
+    return new SimpleTable(parser.cols, rows);
   }
 
 

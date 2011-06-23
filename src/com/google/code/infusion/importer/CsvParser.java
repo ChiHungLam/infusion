@@ -1,7 +1,7 @@
 package com.google.code.infusion.importer;
 
 import com.google.code.infusion.json.JsonArray;
-import com.google.code.infusion.service.Table;
+import com.google.code.infusion.service.SimpleTable;
 
 /**
  * Parser for tables in CSV format. 
@@ -14,22 +14,16 @@ public class CsvParser {
 
   protected LookAheadReader reader;
   protected char commentsChar;
-  private JsonArray cols;
   private char delimiter;
 
   /**
    * Parses the given string as a table in CSV format and returns
    * the corresponding table object.
-   * 
-   * @param csv the CSV file content as a string
-   * @param hasTitles Set to true to indicate that the first row should 
-   *   be interpreted as titles. Otherwise, the columns will be named
-   *   col1...colN
-   * @return The parsed table
    */
-  public static Table parse(String csv, boolean hasTitles, char delimiter) {
-    CsvParser parser = new CsvParser(csv, hasTitles, delimiter);
+  public static SimpleTable parse(String csv, char delimiter) {
+    CsvParser parser = new CsvParser(csv, delimiter);
     JsonArray rows = JsonArray.create();
+    JsonArray cols = parser.readRow();
     while (true) {
       JsonArray row = parser.readRow();
       if (row == null) {
@@ -37,16 +31,11 @@ public class CsvParser {
       }
       rows.setArray(rows.length(), row);
     }
-    return new Table(parser.cols, rows);
+    return new SimpleTable(cols, rows);
   }
 
-  private CsvParser(String csv, boolean titleLine, char delimiter) {
+  public CsvParser(String csv, char delimiter) {
     this.reader = new LookAheadReader(csv);
-    if(titleLine) {
-      cols = readRow();
-    } else {
-      cols = JsonArray.create();
-    }
   }
 
   public JsonArray readRow() {
@@ -64,9 +53,6 @@ public class CsvParser {
       }
 
       row.setString(i, val);
-      if (i > cols.length()) {
-        cols.setString(i, "col" + i);
-      }
       i++;
     }
     return row;
@@ -108,12 +94,9 @@ public class CsvParser {
         return EOL;
       case -1:
         return EOF;
-      case ',':
-        reader.read();
-        return null;
       default:
         result = reader.readTo(",\n\r").trim();
-        if (reader.peek(0) == ',')
+        if (reader.peek(0) == delimiter)
           reader.read();
         return result;
       }

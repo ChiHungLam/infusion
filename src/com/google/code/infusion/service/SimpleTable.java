@@ -13,24 +13,24 @@ import com.google.code.infusion.json.JsonObject;
  * 
  * @author Stefan Haustein
  */
-public class Table {
+public class SimpleTable {
   JsonArray cols;
   JsonArray rows;
   
-  public Table() {
+  public SimpleTable() {
     this (JsonArray.create(), JsonArray.create());
   }
   
-  Table(JsonObject table) {
+  SimpleTable(JsonObject table) {
     this(table.getArray("cols"), table.getArray("rows"));
   }
   
-  public Table(JsonArray cols, JsonArray rows) {
+  public SimpleTable(JsonArray cols, JsonArray rows) {
     this.cols = cols;
     this.rows = rows;
   }
 
-  public JsonArray getRows() {
+  public JsonArray getRowArray() {
     return rows;
   }
   
@@ -38,7 +38,7 @@ public class Table {
     return cols;
   }
 
-  public Iterable<JsonArray> getRowsAsIterable() {
+  public Iterable<JsonArray> getRows() {
     return new Iterable<JsonArray>() {
       @Override
       public Iterator<JsonArray> iterator() {

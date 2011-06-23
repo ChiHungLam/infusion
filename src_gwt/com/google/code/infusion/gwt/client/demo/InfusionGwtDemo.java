@@ -2,7 +2,7 @@ package com.google.code.infusion.gwt.client.demo;
 
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.service.FusionTableService;
-import com.google.code.infusion.service.Table;
+import com.google.code.infusion.service.SimpleTable;
 import com.google.code.infusion.util.OAuthLogin;
 import com.google.code.infusion.util.OAuthToken;
 import com.google.gwt.core.client.EntryPoint;
@@ -177,9 +177,9 @@ public class InfusionGwtDemo implements EntryPoint {
     }
     
     println(command);
-    service.query(command, new SimpleCallback<Table>() {
+    service.query(command, new SimpleCallback<SimpleTable>() {
       @Override
-      public void onSuccess(Table result) {
+      public void onSuccess(SimpleTable result) {
         
         SafeHtmlBuilder sb = new SafeHtmlBuilder();
         sb.appendHtmlConstant("<table>");
@@ -192,9 +192,9 @@ public class InfusionGwtDemo implements EntryPoint {
           sb.appendHtmlConstant("</td>");
         }
         sb.appendHtmlConstant("</tr>");
-        for (int i = 0; i < result.getRows().length(); i++) {
+        for (int i = 0; i < result.getRowArray().length(); i++) {
           sb.appendHtmlConstant("<tr>");
-          JsonArray row = result.getRows().getArray(i);
+          JsonArray row = result.getRowArray().getArray(i);
           for (int j = 0; j < row.length(); j++) {
             sb.appendHtmlConstant("<td>");
             sb.appendEscaped(row.getString(j));
