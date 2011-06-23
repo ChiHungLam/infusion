@@ -11,6 +11,7 @@ import java.io.Writer;
 import java.net.URI;
 
 import com.google.code.infusion.service.FusionTableService;
+import com.google.code.infusion.service.Table;
 import com.google.code.infusion.importer.BibtexParser;
 import com.google.code.infusion.importer.CsvParser;
 import com.google.code.infusion.json.JsonArray;
@@ -76,9 +77,9 @@ public class Shell {
         } else if (cmd.startsWith("import ")) {
           importFile(cmd.substring(7).split(" "));
         } else {
-          service.query(cmd, new SimpleCallback<SimpleTable>() {
+          service.query(cmd, new SimpleCallback<Table>() {
             @Override
-            public void onSuccess(SimpleTable result) {
+            public void onSuccess(Table result) {
               System.out.println(result.getCols().serialize());
               for (JsonArray row: result.getRows()) {
                 System.out.println(row.serialize());
@@ -172,7 +173,7 @@ public class Shell {
     }
     
     String data = readFile(fileName);
-    final SimpleTable table;
+    final Table table;
     if (fileName.endsWith(".bib")) {
       table = BibtexParser.parse(data);
     } else {
@@ -182,10 +183,10 @@ public class Shell {
     System.out.println("cols: " + table.getCols().serialize());
     
     if (tableId != null) {
-      service.insert(tableId, table, new SimpleCallback<SimpleTable>() {
+      service.insert(tableId, table, new SimpleCallback<Table>() {
         @Override
-        public void onSuccess(SimpleTable result) {
-          System.out.println("" + result.getRowArray().length() + " rows inserted.");
+        public void onSuccess(Table result) {
+          System.out.println("" + result.getRowCount() + " rows inserted.");
           showPrompt();
         }
       });
@@ -211,13 +212,13 @@ public class Shell {
         sb.append(":STRING");
       }
       sb.append(')');
-      service.query(sb.toString(), new SimpleCallback<SimpleTable>() {
-        public void onSuccess(SimpleTable result) {
-          String tableId = result.getRowArray().getArray(0).getString(0);
-          service.insert(tableId, table, new SimpleCallback<SimpleTable>() {
+      service.query(sb.toString(), new SimpleCallback<Table>() {
+        public void onSuccess(Table result) {
+          String tableId = result.getRows().iterator().next().getString(0);
+          service.insert(tableId, table, new SimpleCallback<Table>() {
             @Override
-            public void onSuccess(SimpleTable result) {
-              System.out.println("" + result.getRowArray().length() + " rows inserted.");
+            public void onSuccess(Table result) {
+              System.out.println("" + result.getRowCount() + " rows inserted.");
               showPrompt();
             }
           });
