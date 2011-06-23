@@ -1,6 +1,8 @@
 package com.google.code.infusion.service;
 
 
+import java.util.Iterator;
+
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.json.JsonObject;
 import com.google.code.infusion.util.ChainedCallback;
@@ -30,16 +32,19 @@ public class FusionTableService {
    * @param data data to insert
    * @param callback will be called when the data is inserted.
    */
-  public void insert(String tableId, SimpleTable data, AsyncCallback<SimpleTable> callback) {
-    insert(tableId, data, 0, null, callback);
+  public void insert(String tableId, Table data, AsyncCallback<Table> callback) {
+    insert(tableId, data.getCols(), data.getRows().iterator(), null, callback);
   }
   
-  private void insert(final String tableId, final SimpleTable data, int offset, 
-      final SimpleTable result, final AsyncCallback<SimpleTable> callback) {
+  private void insert(final String tableId, final JsonArray cols, final Iterator<JsonArray> rows, 
+      final Table result, final AsyncCallback<Table> callback) {
     StringBuilder sb = new StringBuilder();
-    final int end = offset + Math.min(100, data.getRowArray().length() - offset);
-    for (int r = offset; r < end; r++) {
-      JsonArray row = data.getRowArray().getArray(r);
+    int count = 0;
+    while(rows.hasNext()) {
+      if (count == 1) {
+        sb.append(';');
+      }
+      JsonArray row = rows.next();
       sb.append("INSERT INTO ");
       sb.append(tableId);
       sb.append('(');
@@ -54,30 +59,30 @@ public class FusionTableService {
             sb.append(", ");
             values.append(", ");
           } 
-          sb.append(Util.singleQuote(data.getCols().getString(i)));
+          sb.append(Util.singleQuote(cols.getString(i)));
           values.append(Util.quote(value, '\'', true));
         }
       }
       sb.append(") VALUES (");
       sb.append(values);
       sb.append(')');
-      if (data.getRowArray().length() - offset > 1) {
+      if (count > 0) {
         sb.append(';');
       }
+      count++;
     }
 //    System.out.println("Sending statement: " + sb);
-    query(sb.toString(), new ChainedCallback<SimpleTable>(callback) {
+    query(sb.toString(), new ChainedCallback<Table>(callback) {
       @Override
-      public void onSuccess(SimpleTable newResult) {
+      public void onSuccess(Table newResult) {
         if (result != null) {
-          int i = result.getRowArray().length();
           for (JsonArray row: newResult.getRows()) {
-            result.getRowArray().setArray(i++, row);
+            result.addRow(row);
           }
           newResult = result;
         }
-        if (end < data.getRowArray().length()) {
-          insert(tableId, data, end, newResult, callback);
+        if (rows.hasNext()) {
+          insert(tableId, cols, rows, newResult, callback);
         } else {
           callback.onSuccess(result);
         }
@@ -102,7 +107,7 @@ public class FusionTableService {
   /**
    * Sends the given SQL command.
    */
-  public void query(String sql, final AsyncCallback<SimpleTable> callback) {
+  public void query(String sql, final AsyncCallback<Table> callback) {
     String lSql = (sql.length() > 10 ? sql.substring(0, 10) : sql).toLowerCase();
     String url = BASE_URL + "?jsonCallback=callback";
     String data = "sql=" + Util.urlEncode(sql);

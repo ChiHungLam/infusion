@@ -2,6 +2,7 @@ package com.google.code.infusion.importer;
 
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.service.SimpleTable;
+import com.google.code.infusion.service.Table;
 
 /**
  * Parser for tables in CSV format. 
@@ -20,7 +21,7 @@ public class CsvParser {
    * Parses the given string as a table in CSV format and returns
    * the corresponding table object.
    */
-  public static SimpleTable parse(String csv, char delimiter) {
+  public static Table parse(String csv, char delimiter) {
     CsvParser parser = new CsvParser(csv, delimiter);
     JsonArray rows = JsonArray.create();
     JsonArray cols = parser.readRow();

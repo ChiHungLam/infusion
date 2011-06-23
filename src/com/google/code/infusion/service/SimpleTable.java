@@ -13,7 +13,7 @@ import com.google.code.infusion.json.JsonObject;
  * 
  * @author Stefan Haustein
  */
-public class SimpleTable {
+public class SimpleTable implements Table {
   JsonArray cols;
   JsonArray rows;
   
@@ -28,10 +28,6 @@ public class SimpleTable {
   public SimpleTable(JsonArray cols, JsonArray rows) {
     this.cols = cols;
     this.rows = rows;
-  }
-
-  public JsonArray getRowArray() {
-    return rows;
   }
   
   public JsonArray getCols() {
@@ -62,5 +58,14 @@ public class SimpleTable {
         };
       }
     };
+  }
+
+  public int getRowCount() {
+    return rows.length();
+  }
+
+  @Override
+  public void addRow(JsonArray row) {
+    rows.setArray(rows.length(), row);
   }
 }
