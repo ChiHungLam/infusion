@@ -30,16 +30,16 @@ public class FusionTableService {
    * @param data data to insert
    * @param callback will be called when the data is inserted.
    */
-  public void insert(String tableId, Table data, AsyncCallback<Table> callback) {
-    insert(tableId, data, 0, callback);
+  public void insert(String tableId, SimpleTable data, AsyncCallback<SimpleTable> callback) {
+    insert(tableId, data, 0, null, callback);
   }
   
-  private void insert(final String tableId, final Table data, int offset, 
-      final AsyncCallback<Table> callback) {
+  private void insert(final String tableId, final SimpleTable data, int offset, 
+      final SimpleTable result, final AsyncCallback<SimpleTable> callback) {
     StringBuilder sb = new StringBuilder();
-    final int end = offset + Math.min(100, data.getRows().length() - offset);
+    final int end = offset + Math.min(100, data.getRowArray().length() - offset);
     for (int r = offset; r < end; r++) {
-      JsonArray row = data.getRows().getArray(r);
+      JsonArray row = data.getRowArray().getArray(r);
       sb.append("INSERT INTO ");
       sb.append(tableId);
       sb.append('(');
@@ -61,16 +61,23 @@ public class FusionTableService {
       sb.append(") VALUES (");
       sb.append(values);
       sb.append(')');
-      if (data.getRows().length() - offset > 1) {
+      if (data.getRowArray().length() - offset > 1) {
         sb.append(';');
       }
     }
 //    System.out.println("Sending statement: " + sb);
-    query(sb.toString(), new ChainedCallback<Table>(callback) {
+    query(sb.toString(), new ChainedCallback<SimpleTable>(callback) {
       @Override
-      public void onSuccess(Table result) {
-        if (end < data.getRows().length()) {
-          insert(tableId, data, end, callback);
+      public void onSuccess(SimpleTable newResult) {
+        if (result != null) {
+          int i = result.getRowArray().length();
+          for (JsonArray row: newResult.getRows()) {
+            result.getRowArray().setArray(i++, row);
+          }
+          newResult = result;
+        }
+        if (end < data.getRowArray().length()) {
+          insert(tableId, data, end, newResult, callback);
         } else {
           callback.onSuccess(result);
         }
@@ -95,7 +102,7 @@ public class FusionTableService {
   /**
    * Sends the given SQL command.
    */
-  public void query(String sql, final AsyncCallback<Table> callback) {
+  public void query(String sql, final AsyncCallback<SimpleTable> callback) {
     String lSql = (sql.length() > 10 ? sql.substring(0, 10) : sql).toLowerCase();
     String url = BASE_URL + "?jsonCallback=callback";
     String data = "sql=" + Util.urlEncode(sql);
@@ -118,9 +125,9 @@ public class FusionTableService {
           int start = data.indexOf('(');
           int end = data.lastIndexOf(')');
           JsonObject jso = JsonObject.parse(data.substring(start + 1, end));
-          callback.onSuccess(new Table(jso.getObject("table")));
+          callback.onSuccess(new SimpleTable(jso.getObject("table")));
         } else if (!data.trim().startsWith("<")) {
-          callback.onSuccess(new Table(JsonObject.parse(
+          callback.onSuccess(new SimpleTable(JsonObject.parse(
               "{'cols':['result'],'rows':[[" + 
               Util.quote(data.trim(), '"', true) +"]]}")));
         } else {
