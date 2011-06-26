@@ -77,7 +77,6 @@ public class JsonArray  {
 	}
 
 	public static JsonArray parse(String json) {
-		System.out.println("parsing: '" + json+"'");
 		try {
 			StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(json));
 			tokenizer.quoteChar('"');
