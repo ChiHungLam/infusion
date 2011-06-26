@@ -17,6 +17,7 @@ public class CsvParser implements Iterator<JsonArray>{
   protected LookAheadReader reader;
   protected char commentsChar;
   private char delimiter;
+  private String readTo;
   JsonArray currentRow;
 
   /**
@@ -34,6 +35,8 @@ public class CsvParser implements Iterator<JsonArray>{
 
   public CsvParser(String csv, char delimiter) {
     this.reader = new LookAheadReader(csv);
+    this.delimiter = delimiter;
+    this.readTo = "\n\r" + delimiter;
   }
 
   private JsonArray readRow() {
@@ -80,20 +83,22 @@ public class CsvParser implements Iterator<JsonArray>{
         result = readQuoted();
         // reader.skip(" \t");
         skip();
-        if (reader.peek(0) == delimiter)
+        if (reader.peek(0) == delimiter) {
           reader.read();
+        }
         return result;
 
       case '\r':
-        if (reader.peek(0) == '\n')
+        if (reader.peek(0) == '\n') {
           reader.read();
+        }
       case '\n':
         reader.read();
         return EOL;
       case -1:
         return EOF;
       default:
-        result = reader.readTo(",\n\r").trim();
+        result = reader.readTo(readTo).trim();
         if (reader.peek(0) == delimiter)
           reader.read();
         return result;
@@ -132,12 +137,13 @@ public class CsvParser implements Iterator<JsonArray>{
     if (!hasNext()) {
       throw new IllegalStateException();
     }
-    return currentRow;
+    JsonArray result = currentRow;
+    currentRow = null;
+    return result;
   }
 
   @Override
   public void remove() {
-    // TODO Auto-generated method stub
-    
+    throw new UnsupportedOperationException();
   }
 }
