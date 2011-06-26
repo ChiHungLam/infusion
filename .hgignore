@@ -19,3 +19,7 @@ syntax: regexp
 ^src/log4j\.properties$
 syntax: regexp
 ^\.gwt$
+syntax: regexp
+^war/deploy\.sh$
+syntax: regexp
+^war/infusion\.zip$
