@@ -32,15 +32,15 @@ public class FusionTableService {
    * @param data data to insert
    * @param callback will be called when the data is inserted.
    */
-  public void insert(String tableId, Table data, AsyncCallback<Table> callback) {
-    insert(tableId, data.getCols(), data.getRows().iterator(), null, callback);
+  public void insert(String tableId, Table data, boolean returnIds, AsyncCallback<Table> callback) {
+    insert(tableId, data.getCols(), data.iterator(), null, returnIds, callback);
   }
   
   private void insert(final String tableId, final JsonArray cols, final Iterator<JsonArray> rows, 
-      final Table result, final AsyncCallback<Table> callback) {
+      final Table result, final boolean returnIds, final AsyncCallback<Table> callback) {
     StringBuilder sb = new StringBuilder();
     int count = 0;
-    while(rows.hasNext()) {
+    while(rows.hasNext() && count < 256) {
       if (count == 1) {
         sb.append(';');
       }
@@ -75,14 +75,26 @@ public class FusionTableService {
     query(sb.toString(), new ChainedCallback<Table>(callback) {
       @Override
       public void onSuccess(Table newResult) {
-        if (result != null) {
-          for (JsonArray row: newResult.getRows()) {
-            result.addRow(row);
+        if (returnIds) {
+          if (result != null) {
+            for (JsonArray row: newResult) {
+              result.addRow(row);
+            }
+            newResult = result;
           }
-          newResult = result;
+        } else {
+          int count = result == null ? 0 : result.getRowCount();
+          count += newResult.getRowCount();
+          JsonArray cols = JsonArray.create();
+          cols.setString(0, "count");
+          JsonArray rows = JsonArray.create();
+          JsonArray row0 = JsonArray.create();
+          rows.setArray(0, row0);
+          row0.setNumber(0, count);
+          newResult = new Table(cols, rows);
         }
         if (rows.hasNext()) {
-          insert(tableId, cols, rows, newResult, callback);
+          insert(tableId, cols, rows, newResult, returnIds, callback);
         } else {
           callback.onSuccess(result);
         }
@@ -130,9 +142,9 @@ public class FusionTableService {
           int start = data.indexOf('(');
           int end = data.lastIndexOf(')');
           JsonObject jso = JsonObject.parse(data.substring(start + 1, end));
-          callback.onSuccess(new SimpleTable(jso.getObject("table")));
+          callback.onSuccess(new Table(jso.getObject("table")));
         } else if (!data.trim().startsWith("<")) {
-          callback.onSuccess(new SimpleTable(JsonObject.parse(
+          callback.onSuccess(new Table(JsonObject.parse(
               "{'cols':['result'],'rows':[[" + 
               Util.quote(data.trim(), '"', true) +"]]}")));
         } else {

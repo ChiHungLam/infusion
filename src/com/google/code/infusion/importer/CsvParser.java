@@ -1,7 +1,8 @@
 package com.google.code.infusion.importer;
 
+import java.util.Iterator;
+
 import com.google.code.infusion.json.JsonArray;
-import com.google.code.infusion.service.SimpleTable;
 import com.google.code.infusion.service.Table;
 
 /**
@@ -9,37 +10,33 @@ import com.google.code.infusion.service.Table;
  * 
  * @author Stefan Haustein
  */
-public class CsvParser {
+public class CsvParser implements Iterator<JsonArray>{
   static final String EOL = "<EOL>";
   static final String EOF = "<EOF>";
 
   protected LookAheadReader reader;
   protected char commentsChar;
   private char delimiter;
+  JsonArray currentRow;
 
   /**
    * Parses the given string as a table in CSV format and returns
    * the corresponding table object.
    */
-  public static Table parse(String csv, char delimiter) {
+  public static Table parse(final String csv, final char delimiter) {
     CsvParser parser = new CsvParser(csv, delimiter);
-    JsonArray rows = JsonArray.create();
-    JsonArray cols = parser.readRow();
-    while (true) {
-      JsonArray row = parser.readRow();
-      if (row == null) {
-        break;
-      }
-      rows.setArray(rows.length(), row);
+    Table table = new Table(parser.next(), JsonArray.create());
+    while(parser.hasNext()) {
+      table.addRow(parser.next());
     }
-    return new SimpleTable(cols, rows);
+    return table;
   }
 
   public CsvParser(String csv, char delimiter) {
     this.reader = new LookAheadReader(csv);
   }
 
-  public JsonArray readRow() {
+  private JsonArray readRow() {
     JsonArray row = JsonArray.create();
 
     String val = null;
@@ -120,5 +117,27 @@ public class CsvParser {
     } while (reader.peek(0) == '"');
 
     return buf.toString();
+  }
+
+  @Override
+  public boolean hasNext() {
+    if (currentRow == null) {
+      currentRow = readRow();
+    }
+    return currentRow != null;
+  }
+
+  @Override
+  public JsonArray next() {
+    if (!hasNext()) {
+      throw new IllegalStateException();
+    }
+    return currentRow;
+  }
+
+  @Override
+  public void remove() {
+    // TODO Auto-generated method stub
+    
   }
 }

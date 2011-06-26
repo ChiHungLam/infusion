@@ -192,7 +192,7 @@ public class InfusionGwtDemo implements EntryPoint {
           sb.appendHtmlConstant("</td>");
         }
         sb.appendHtmlConstant("</tr>");
-        for (JsonArray row:  result.getRows()) {
+        for (JsonArray row:  result) {
           sb.appendHtmlConstant("<tr>");
           for (int j = 0; j < row.length(); j++) {
             sb.appendHtmlConstant("<td>");

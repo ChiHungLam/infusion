@@ -3,7 +3,6 @@ package com.google.code.infusion.importer;
 import java.util.HashMap;
 
 import com.google.code.infusion.json.JsonArray;
-import com.google.code.infusion.service.SimpleTable;
 import com.google.code.infusion.service.Table;
 
 /**
@@ -69,7 +68,7 @@ public class BibtexParser {
       }
       rows.setArray(rows.length(), row);
     }
-    return new SimpleTable(parser.cols, rows);
+    return new Table(parser.cols, rows);
   }
 
 

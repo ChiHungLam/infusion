@@ -15,7 +15,7 @@ public class MiniDemo {
     service.query("select * from 197026", new AsyncCallback<Table>() {
       @Override
       public void onSuccess(Table result) {
-        for (JsonArray row: result.getRows()) {
+        for (JsonArray row: result) {
           System.out.println(row.serialize());
         }
       }
