@@ -15,7 +15,7 @@ import com.google.code.infusion.service.Table;
 import com.google.code.infusion.importer.BibtexParser;
 import com.google.code.infusion.importer.CsvParser;
 import com.google.code.infusion.json.JsonArray;
-import com.google.code.infusion.service.SimpleTable;
+import com.google.code.infusion.service.Table;
 import com.google.code.infusion.util.OAuthLogin;
 import com.google.code.infusion.util.OAuthToken;
 import com.google.code.infusion.util.Util;
@@ -81,7 +81,7 @@ public class Shell {
             @Override
             public void onSuccess(Table result) {
               System.out.println(result.getCols().serialize());
-              for (JsonArray row: result.getRows()) {
+              for (JsonArray row: result) {
                 System.out.println(row.serialize());
               }
               showPrompt();
@@ -183,10 +183,10 @@ public class Shell {
     System.out.println("cols: " + table.getCols().serialize());
     
     if (tableId != null) {
-      service.insert(tableId, table, new SimpleCallback<Table>() {
+      service.insert(tableId, table, false, new SimpleCallback<Table>() {
         @Override
         public void onSuccess(Table result) {
-          System.out.println("" + result.getRowCount() + " rows inserted.");
+          System.out.println("" + result.iterator().next().getNumber(0) + " rows inserted.");
           showPrompt();
         }
       });
@@ -214,11 +214,11 @@ public class Shell {
       sb.append(')');
       service.query(sb.toString(), new SimpleCallback<Table>() {
         public void onSuccess(Table result) {
-          String tableId = result.getRows().iterator().next().getString(0);
-          service.insert(tableId, table, new SimpleCallback<Table>() {
+          String tableId = result.iterator().next().getString(0);
+          service.insert(tableId, table, false, new SimpleCallback<Table>() {
             @Override
             public void onSuccess(Table result) {
-              System.out.println("" + result.getRowCount() + " rows inserted.");
+              System.out.println("" + result.iterator().next().getNumber(0) + " rows inserted.");
               showPrompt();
             }
           });
