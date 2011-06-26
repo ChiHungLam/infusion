@@ -1,11 +1,7 @@
 package com.google.code.infusion.service;
 
-
-import java.util.Iterator;
-
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.json.JsonObject;
-import com.google.code.infusion.util.ChainedCallback;
 
 import com.google.code.infusion.util.HttpRequestBuilder;
 import com.google.code.infusion.util.HttpResponse;
@@ -32,19 +28,13 @@ public class FusionTableService {
    * @param data data to insert
    * @param callback will be called when the data is inserted.
    */
-  public void insert(String tableId, Table data, boolean returnIds, AsyncCallback<Table> callback) {
-    insert(tableId, data.getCols(), data.iterator(), null, returnIds, callback);
-  }
-  
-  private void insert(final String tableId, final JsonArray cols, final Iterator<JsonArray> rows, 
-      final Table result, final boolean returnIds, final AsyncCallback<Table> callback) {
+  public void insert(final String tableId, final Table data, final AsyncCallback<Table> callback) {
     StringBuilder sb = new StringBuilder();
     int count = 0;
-    while(rows.hasNext() && count < 256) {
+    for(JsonArray row: data) {
       if (count == 1) {
         sb.append(';');
       }
-      JsonArray row = rows.next();
       sb.append("INSERT INTO ");
       sb.append(tableId);
       sb.append('(');
@@ -59,7 +49,7 @@ public class FusionTableService {
             sb.append(", ");
             values.append(", ");
           } 
-          sb.append(Util.singleQuote(cols.getString(i)));
+          sb.append(Util.singleQuote(data.getCol(i)));
           values.append(Util.quote(value, '\'', true));
         }
       }
@@ -71,35 +61,8 @@ public class FusionTableService {
       }
       count++;
     }
-//    System.out.println("Sending statement: " + sb);
-    query(sb.toString(), new ChainedCallback<Table>(callback) {
-      @Override
-      public void onSuccess(Table newResult) {
-        if (returnIds) {
-          if (result != null) {
-            for (JsonArray row: newResult) {
-              result.addRow(row);
-            }
-            newResult = result;
-          }
-        } else {
-          int count = result == null ? 0 : result.getRowCount();
-          count += newResult.getRowCount();
-          JsonArray cols = JsonArray.create();
-          cols.setString(0, "count");
-          JsonArray rows = JsonArray.create();
-          JsonArray row0 = JsonArray.create();
-          rows.setArray(0, row0);
-          row0.setNumber(0, count);
-          newResult = new Table(cols, rows);
-        }
-        if (rows.hasNext()) {
-          insert(tableId, cols, rows, newResult, returnIds, callback);
-        } else {
-          callback.onSuccess(result);
-        }
-      }
-    });
+
+    query(sb.toString(), callback);
   }
 
   /**

@@ -17,16 +17,11 @@ public class Table implements Iterable<JsonArray> {
   JsonArray cols;
   JsonArray rows;
   
-  public Table() {
-    this (JsonArray.create(), JsonArray.create());
-  }
-  
   Table(JsonObject table) {
     this(table.getArray("cols"), table.getArray("rows"));
   }
   
   public Table(JsonArray cols, JsonArray rows) {
-    this.cols = cols;
     this.rows = rows;
   }
   
@@ -34,6 +29,14 @@ public class Table implements Iterable<JsonArray> {
     return cols;
   }
 
+  public String getCol(int index) {
+    return cols.getString(index);
+  }
+  
+  public int getColCount() {
+    return cols.length();
+  }
+  
   public int getRowCount() {
     return rows.length();
   }

@@ -183,7 +183,7 @@ public class Shell {
     System.out.println("cols: " + table.getCols().serialize());
     
     if (tableId != null) {
-      service.insert(tableId, table, false, new SimpleCallback<Table>() {
+      service.insert(tableId, table, new SimpleCallback<Table>() {
         @Override
         public void onSuccess(Table result) {
           System.out.println("" + result.iterator().next().getNumber(0) + " rows inserted.");
@@ -215,7 +215,7 @@ public class Shell {
       service.query(sb.toString(), new SimpleCallback<Table>() {
         public void onSuccess(Table result) {
           String tableId = result.iterator().next().getString(0);
-          service.insert(tableId, table, false, new SimpleCallback<Table>() {
+          service.insert(tableId, table, new SimpleCallback<Table>() {
             @Override
             public void onSuccess(Table result) {
               System.out.println("" + result.iterator().next().getNumber(0) + " rows inserted.");
