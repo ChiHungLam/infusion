@@ -15,7 +15,6 @@ public class JsonObject {
 	}
 	
 	public static JsonObject parse(String json) {
-		System.out.println("parsing: '" + json+"'");
 		try {
 			StreamTokenizer tokenizer = new StreamTokenizer(new StringReader(json));
 			tokenizer.quoteChar('"');
