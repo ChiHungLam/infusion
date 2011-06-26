@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
+import java.util.Iterator;
 
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
@@ -156,6 +157,7 @@ public class Shell {
     String tableId = null;
     String fileName = null;
     char delimiter = ',';
+    int offset = 0;
     for(int i = 0; i < param.length; i += 2) {
       String name = param[i];
       String value = param[i + 1];
@@ -169,63 +171,99 @@ public class Shell {
           return;
         }
         delimiter = value.charAt(0);
+      } else if (name.equals("offset")) {
+        offset = Integer.parseInt(value);
       }
     }
     
     String data = readFile(fileName);
-    final Table table;
+    final JsonArray cols;
+    final Iterator<JsonArray> rows;
     if (fileName.endsWith(".bib")) {
-      table = BibtexParser.parse(data);
+      Table table = BibtexParser.parse(data);
+      cols = table.getCols();
+      rows = table.iterator();
     } else {
-      table = CsvParser.parse(data, delimiter);
+      rows = new CsvParser(data, delimiter);
+      cols = rows.next();
     }
-    
-    System.out.println("cols: " + table.getCols().serialize());
+
+    System.out.println("cols: " + cols.serialize());
+    if (offset != 0) {
+      System.out.print("Advancing " + offset + " rows... ");
+      for (int i = 0; i < offset; i++) {
+        rows.next();
+      }
+      System.out.println("done.");
+    }
     
     if (tableId != null) {
-      service.insert(tableId, table, new SimpleCallback<Table>() {
-        @Override
-        public void onSuccess(Table result) {
-          System.out.println("" + result.iterator().next().getNumber(0) + " rows inserted.");
-          showPrompt();
-        }
-      });
-      
-    } else {
-      String name = fileName;
-      int cut = name.lastIndexOf('/');
-      if (cut != -1) {
-        name = name.substring(cut + 1);
-      }
-      cut = name.lastIndexOf('.');
-      if (cut != -1) {
-        name = name.substring(0, cut);
-      }
-      StringBuilder sb = new StringBuilder("CREATE TABLE ");
-      sb.append(Util.singleQuote(name));
-      sb.append(" (");
-      for (int i = 0; i < table.getCols().length(); i++) {
-        if (i != 0) {
-          sb.append(',');
-        }
-        sb.append(Util.singleQuote(table.getCols().getString(i)));
-        sb.append(":STRING");
-      }
-      sb.append(')');
-      service.query(sb.toString(), new SimpleCallback<Table>() {
-        public void onSuccess(Table result) {
-          String tableId = result.iterator().next().getString(0);
-          service.insert(tableId, table, new SimpleCallback<Table>() {
-            @Override
-            public void onSuccess(Table result) {
-              System.out.println("" + result.iterator().next().getNumber(0) + " rows inserted.");
-              showPrompt();
-            }
-          });
-        }
-      });
+      importRows(tableId, cols, rows, offset);
+      return;
     }
+    final int finalOffset = offset;
+    String name = fileName;
+    int cut = name.lastIndexOf('/');
+    if (cut != -1) {
+      name = name.substring(cut + 1);
+    }
+    cut = name.lastIndexOf('.');
+    if (cut != -1) {
+      name = name.substring(0, cut);
+    }
+    StringBuilder sb = new StringBuilder("CREATE TABLE ");
+    sb.append(Util.singleQuote(name));
+    sb.append(" (");
+    for (int i = 0; i < cols.length(); i++) {
+      if (i != 0) {
+        sb.append(',');
+      }
+      sb.append(Util.singleQuote(cols.getString(i)));
+      sb.append(":STRING");
+    }
+    sb.append(')');
+    service.query(sb.toString(), new SimpleCallback<Table>() {
+      public void onSuccess(Table result) {
+        String tableId = result.iterator().next().getString(0);
+        importRows(tableId, cols, rows, finalOffset);
+      }
+    });
   }
+  
+  private void importRows(final String tableId, final JsonArray cols, final Iterator<JsonArray> rows, final int offset) {
+    final Table buf = new Table(cols, JsonArray.create());
+    if (!rows.hasNext()) {
+      if (offset == 0) {
+        System.out.println("Nothing to import.");
+      } else {
+        System.out.println("All rows imported successfully.");
+      }
+      showPrompt();
+      return;
+    }
+    for (int i = 0; i < 250 && rows.hasNext(); i++) {
+      buf.addRow(rows.next());
+    }
+    
+    System.out.print("Importing rows " + offset + " to " + (offset + buf.getRowCount()) + "... ");
+    service.insert(tableId, buf, new AsyncCallback<Table>() {
+      @Override
+      public void onSuccess(Table result) {
+        System.out.println("Ok.");
+        importRows(tableId, cols, rows, offset + buf.getRowCount());
+      }
+
+      @Override
+      public void onFailure(Throwable error) {
+        System.out.println(error.getMessage());
+        if (offset != 0) {
+          System.out.println("You may be able to import the remaining data spcecifying table " + tableId + " and offset "+ offset);
+        }
+        showPrompt();
+      }
+    });
+  }
+  
 
   private void showHelp() {
     System.out.println();
