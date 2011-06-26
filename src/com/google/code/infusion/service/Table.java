@@ -22,6 +22,7 @@ public class Table implements Iterable<JsonArray> {
   }
   
   public Table(JsonArray cols, JsonArray rows) {
+    this.cols = cols;
     this.rows = rows;
   }
   
