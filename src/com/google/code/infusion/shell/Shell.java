@@ -2,6 +2,8 @@ package com.google.code.infusion.shell;
 
 import java.awt.Desktop;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 
 import com.google.code.infusion.service.FusionTableService;
@@ -139,17 +142,11 @@ public class Shell {
   
   
   private static String readFile(String fileName) throws IOException {
-    Reader reader = new InputStreamReader(new FileInputStream(fileName), "utf-8");
-    char[] buf = new char[32768];
-    StringBuilder sb = new StringBuilder();
-    while (true) {
-      int count = reader.read(buf);
-      if (count <= 0) {
-        break;
-      }
-      sb.append(buf, 0, count);
-    }
-    return sb.toString();
+    File file = new File(fileName);
+    byte[] buf = new byte[(int) file.length()];
+    DataInputStream dis = new DataInputStream(new FileInputStream(fileName));
+    dis.readFully(buf);
+    return new String(buf, "utf-8");
   }
   
   

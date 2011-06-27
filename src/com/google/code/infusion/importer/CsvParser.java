@@ -89,7 +89,7 @@ public class CsvParser implements Iterator<JsonArray>{
         return result;
 
       case '\r':
-        if (reader.peek(0) == '\n') {
+        if (reader.peek(1) == '\n') {
           reader.read();
         }
       case '\n':
