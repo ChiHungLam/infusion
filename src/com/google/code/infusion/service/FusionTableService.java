@@ -33,13 +33,13 @@ public class FusionTableService {
     int count = 0;
     for(JsonArray row: data) {
       if (count == 1) {
-        sb.append(';');
+        sb.append(";\n");
       }
       sb.append("INSERT INTO ");
       sb.append(tableId);
       sb.append('(');
       StringBuilder values = new StringBuilder();
-      for (int i = 0; i < row.length(); i++) {
+      for (int i = 0; i < Math.min(data.getColCount(), row.length()); i++) {
         String value = row.getString(i);
         if (value == null) {
           value = "";
@@ -57,11 +57,10 @@ public class FusionTableService {
       sb.append(values);
       sb.append(')');
       if (count > 0) {
-        sb.append(';');
+        sb.append(";\n");
       }
       count++;
     }
-
     query(sb.toString(), callback);
   }
 
