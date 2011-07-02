@@ -53,7 +53,7 @@ public class Shell {
       System.out.println("Using existing access token");
       showPrompt();
     } catch (Exception e) {
-      showError("Reading access token failed", e);
+      showError("Reading access token failed", null);
     }
   }
   
@@ -92,7 +92,7 @@ public class Shell {
             }});
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        showError(e);
       }
     }
     System.out.println("Good bye!");
