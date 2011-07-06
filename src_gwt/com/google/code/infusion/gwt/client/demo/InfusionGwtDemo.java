@@ -1,5 +1,8 @@
 package com.google.code.infusion.gwt.client.demo;
 
+import com.google.code.infusion.gwt.client.file.File;
+import com.google.code.infusion.gwt.client.file.FileReaderBuilder;
+import com.google.code.infusion.gwt.client.file.FileUtil;
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
@@ -8,9 +11,12 @@ import com.google.code.infusion.util.OAuthToken;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -19,6 +25,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
@@ -28,6 +35,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+
 
 /**
  * Fusion table GWT client demo. Displays a command line and
@@ -43,6 +51,7 @@ public class InfusionGwtDemo implements EntryPoint {
   private FlowPanel outputPanel = new FlowPanel();
   private TextBox inputBox = new TextBox();
   private ScrollPanel scrollPanel = new ScrollPanel(outputPanel);
+  private ImportDialog importDialog;
   
   /**
    * This is the entry point method.
@@ -97,9 +106,13 @@ public class InfusionGwtDemo implements EntryPoint {
     Button submitButton = new Button("Submit");
     Button clearButton = new Button("Clear");
     Button authButton = new Button("Authenticate");
+    Button uploadButton = new Button("Import");
+    final FileUpload upload = new FileUpload();
     buttonPanel.add(submitButton);
     buttonPanel.add(clearButton);
     buttonPanel.add(authButton);
+//    buttonPanel.add(uploadButton);
+  //  upload.setVisible(false);
     
     SimplePanel sp = new SimplePanel();
     buttonPanel.add(sp);
@@ -107,8 +120,10 @@ public class InfusionGwtDemo implements EntryPoint {
     element.getStyle().setDisplay(Display.INLINE);
     element.setInnerHTML(
         " <a href='http://code.google.com/apis/fusiontables/docs/developers_guide.html'" +
-        " target='blank_'>API Guide</a> <a href='http://code.google.com/p/infusion' " +
-        "target='blank_'>Infusion Homepage</a>");
+        " target='blank_'>API Guide</a> | <a href='http://code.google.com/p/infusion' " +
+        "target='blank_'>Infusion Homepage</a> | Import: ");
+
+    buttonPanel.add(upload);
 
     FormPanel formPanel = new FormPanel();
     mainPanel.addSouth(buttonPanel, 2);
@@ -155,6 +170,42 @@ public class InfusionGwtDemo implements EntryPoint {
       }
     });
     
+    uploadButton.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
+        InputElement.as(upload.getElement()).click();
+      }});
+    
+    upload.addChangeHandler(new ChangeHandler() {
+      @Override
+      public void onChange(ChangeEvent event) {
+        final File file = FileUtil.getFile(upload.getElement(), 0);
+        println(file.getName());
+
+        new FileReaderBuilder().readAsText(file, "utf-8", new SimpleCallback<String>() {
+          @Override
+          public void onSuccess(String result) {
+            try {
+            println("file reader: load");
+            if (importDialog == null) {
+              importDialog = new ImportDialog(service, 
+                  new SimpleCallback<String>() {
+                    @Override
+                    public void onSuccess(String result) {
+                      println(result);
+                    }} );
+            }
+            println("calling show");
+            importDialog.show(file, result);
+            println("called show");
+            } catch(Exception e) {
+              println("Error: " + e);
+            }
+          }
+
+        });
+      }
+    });
   }
 
   
@@ -162,7 +213,7 @@ public class InfusionGwtDemo implements EntryPoint {
     println("\u00a0");
   }
   
-  private void println(String s) {
+  public void println(String s) {
     Label label = new Label(s);
     label.getElement().getStyle().setFontWeight(FontWeight.BOLD);
     outputPanel.add(label);
@@ -215,6 +266,16 @@ public class InfusionGwtDemo implements EntryPoint {
   abstract class SimpleCallback<T> implements AsyncCallback<T>{
     public void onFailure(Throwable error) {
       println(error.toString());
+    }
+  }
+
+
+  public void showError(String message, Throwable exception) {
+    if (message != null) {
+      println(message);
+    }
+    if (exception != null) {
+      println(exception.toString());
     }
   }
 }

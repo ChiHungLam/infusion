@@ -6,9 +6,11 @@
 
   <!-- Specify the paths for translatable code                    -->
   <source path='gwt/client'/>
+  <source path='importer'/>
   <source path='json'/>
   <source path='service'/>
   <source path='util'/>
+  <source path='demo'/>
   
   <super-source path='emul' />   
 </module>
