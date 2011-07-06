@@ -42,7 +42,11 @@ public class JsonArray extends JavaScriptObject {
 		return this[index];
 	}-*/;
 
-	public final native void setBoolean(int index, boolean value) /*-{
+    public final native void setArray(int index, JsonArray value) /*-{
+      this[index] = value;
+    }-*/;
+
+    public final native void setBoolean(int index, boolean value) /*-{
    		this[index] = value;
 	}-*/;
 

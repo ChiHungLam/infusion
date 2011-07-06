@@ -8,21 +8,17 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.Iterator;
 
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
-import com.google.code.infusion.importer.BibtexParser;
-import com.google.code.infusion.importer.CsvParser;
+import com.google.code.infusion.importer.Importer;
+import com.google.code.infusion.importer.ImporterBuilder;
+import com.google.code.infusion.importer.ImporterCallback;
 import com.google.code.infusion.json.JsonArray;
-import com.google.code.infusion.service.Table;
 import com.google.code.infusion.util.OAuthLogin;
 import com.google.code.infusion.util.OAuthToken;
-import com.google.code.infusion.util.Util;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
@@ -92,10 +88,10 @@ public class Shell {
             }});
         }
       } catch (IOException e) {
-        showError(e);
+        showError(null, e);
       }
     }
-    System.out.println("Good bye!");
+    println("Good bye!");
   }
 
   private void auth() {
@@ -151,116 +147,50 @@ public class Shell {
   
   
   private void importFile(String[] param) throws IOException {
-    String tableId = null;
-    String fileName = null;
-    char delimiter = ',';
-    int offset = 0;
+    ImporterBuilder builder = new ImporterBuilder(service);
     for(int i = 0; i < param.length; i += 2) {
       String name = param[i];
       String value = param[i + 1];
       if (name.equals("file")) {
-        fileName = value;
+        builder.setFileName(value);
       } else if (name.equals("into")) {
-        tableId = value;
+        builder.setTableId(value);
       } else if (name.equals("delimiter")) {
         if (value.length() != 1) {
           showError("Delimiter must be a single character", null);
           return;
         }
-        delimiter = value.charAt(0);
+        builder.setDelimiter(value.charAt(0));
       } else if (name.equals("offset")) {
-        offset = Integer.parseInt(value);
+        builder.setOffset(Integer.parseInt(value));
       }
     }
-    
-    String data = readFile(fileName);
-    final JsonArray cols;
-    final Iterator<JsonArray> rows;
-    if (fileName.endsWith(".bib")) {
-      Table table = BibtexParser.parse(data);
-      cols = table.getCols();
-      rows = table.iterator();
-    } else {
-      rows = new CsvParser(data, delimiter);
-      cols = rows.next();
-    }
-
-    System.out.println("cols: " + cols.serialize());
-    if (offset != 0) {
-      System.out.print("Advancing " + offset + " rows... ");
-      for (int i = 0; i < offset; i++) {
-        rows.next();
-      }
-      System.out.println("done.");
-    }
-    
-    if (tableId != null) {
-      importRows(tableId, cols, rows, offset);
-      return;
-    }
-    final int finalOffset = offset;
-    String name = fileName;
-    int cut = name.lastIndexOf('/');
-    if (cut != -1) {
-      name = name.substring(cut + 1);
-    }
-    cut = name.lastIndexOf('.');
-    if (cut != -1) {
-      name = name.substring(0, cut);
-    }
-    StringBuilder sb = new StringBuilder("CREATE TABLE ");
-    sb.append(Util.singleQuote(name));
-    sb.append(" (");
-    for (int i = 0; i < cols.length(); i++) {
-      if (i != 0) {
-        sb.append(',');
-      }
-      sb.append(Util.singleQuote(cols.getString(i)));
-      sb.append(":STRING");
-    }
-    sb.append(')');
-    service.query(sb.toString(), new SimpleCallback<Table>() {
-      public void onSuccess(Table result) {
-        String tableId = result.iterator().next().getString(0);
-        importRows(tableId, cols, rows, finalOffset);
-      }
-    });
-  }
-  
-  private void importRows(final String tableId, final JsonArray cols, final Iterator<JsonArray> rows, final int offset) {
-    final Table buf = new Table(cols, JsonArray.create());
-    if (!rows.hasNext()) {
-      if (offset == 0) {
-        System.out.println("Nothing to import.");
-      } else {
-        System.out.println("All rows imported successfully.");
-      }
-      showPrompt();
-      return;
-    }
-    for (int i = 0; i < 250 && rows.hasNext(); i++) {
-      buf.addRow(rows.next());
-    }
-    
-    System.out.print("Importing rows " + offset + " to " + (offset + buf.getRowCount()) + "... ");
-    service.insert(tableId, buf, new AsyncCallback<Table>() {
+    builder.setData(readFile(builder.getFileName()));
+    builder.importData(new ImporterCallback() {
       @Override
-      public void onSuccess(Table result) {
-        System.out.println("Ok.");
-        importRows(tableId, cols, rows, offset + buf.getRowCount());
+      public void onProgress(Importer importer) {
+        System.out.println("Import progress: " + importer.getCount() + " rows.");
       }
 
       @Override
-      public void onFailure(Throwable error) {
-        System.out.println(error.getMessage());
-        if (offset != 0) {
-          System.out.println("You may be able to import the remaining data spcecifying table " + tableId + " and offset "+ offset);
-        }
+      public void onSuccess(Importer importer) {
+        System.out.println("Import successfull; imported " + importer.getCount() + " rows.");
         showPrompt();
       }
+
+      @Override
+      public void onFailure(Importer importer, Throwable error) {
+        showError("Import failed. " + importer.getCount() + 
+            " rows were imported. Re-try with offset " + 
+            (importer.getOffset() + importer.getCount()), error);
+      }
+      
     });
   }
-  
+    
+  public void println(String s) {
+    System.out.println(s);
+  }
 
   private void showHelp() {
     System.out.println();
@@ -280,16 +210,12 @@ public class Shell {
   }
 
 
-  private void showPrompt() {
+  public void showPrompt() {
     System.out.print("\nCommand? ");
     System.out.flush();
   }
 
-  private void showError(Throwable caught) {
-    showError(null, caught);
-  }
-
-  private void showError(String message, Throwable caught) {
+  public void showError(String message, Throwable caught) {
     System.out.println();
     if (message != null) {
       System.out.println(message);
@@ -306,4 +232,5 @@ public class Shell {
       showError(error.getMessage(), null);
     }
   }
+
 }

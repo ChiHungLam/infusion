@@ -54,7 +54,7 @@ public class FusionTableService {
         }
       }
       sb.append(") VALUES (");
-      sb.append(values);
+      sb.append(values.toString());
       sb.append(')');
       if (count > 0) {
         sb.append(";\n");
