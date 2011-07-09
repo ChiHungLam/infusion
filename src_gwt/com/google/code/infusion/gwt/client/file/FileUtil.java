@@ -9,7 +9,7 @@ public class FileUtil {
   }
   
   public static native File getFile(Element inputElement, int index) /*-{
-    return input.files[index];
+    return inputElement.files[index];
   }-*/;
 
   

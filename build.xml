@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_shell_run_jar" name="infusion">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_shell_run_jar">
+        <jar destfile="dist/infusion.jar">
+            <manifest>
+                <attribute name="Main-Class" value="com.google.code.infusion.shell.Shell"/>
+                <!-- 
+                  <attribute name="Class-Path" value=". infusion_lib/appengine-local-runtime-shared.jar infusion_lib/el-api.jar infusion_lib/repackaged-appengine-ant-1.7.1.jar infusion_lib/repackaged-appengine-ant-launcher-1.7.1.jar infusion_lib/repackaged-appengine-jasper-6.0.29.jar infusion_lib/repackaged-appengine-jasper-el-6.0.29.jar infusion_lib/repackaged-appengine-tomcat-juli-6.0.29.jar infusion_lib/jsp-api.jar infusion_lib/servlet-api.jar infusion_lib/appengine-api-1.0-sdk-1.4.2.jar infusion_lib/appengine-api-labs-1.4.2.jar infusion_lib/appengine-jsr107cache-1.4.2.jar infusion_lib/jsr107cache-1.1.jar infusion_lib/datanucleus-appengine-1.0.8.final.jar infusion_lib/datanucleus-core-1.1.5.jar infusion_lib/datanucleus-jpa-1.1.5.jar infusion_lib/geronimo-jpa_3.0_spec-1.1.1.jar infusion_lib/geronimo-jta_1.1_spec-1.1.1.jar infusion_lib/jdo2-api-2.3-eb.jar infusion_lib/appengine-tools-api.jar infusion_lib/gwt-user.jar infusion_lib/gwt-dev.jar infusion_lib/appengine-testing.jar infusion_lib/junit.jar"/>
+                -->
+            </manifest>
+            <fileset dir="war/WEB-INF/classes"/>
+        </jar>
+    </target>
+</project>

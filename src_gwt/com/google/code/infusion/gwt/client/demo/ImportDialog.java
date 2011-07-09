@@ -17,21 +17,24 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
 public class ImportDialog {
-  DialogBox dialogBox = new DialogBox();
-  Grid grid = new Grid(5, 2);
-  TextBox tableIdBox = new TextBox();
-  TextBox delimiterBox = new TextBox();
-  TextBox offsetBox = new TextBox();
-  TextBox importedBox = new TextBox();
-  Button cancelButton = new Button("Cancel");
-  Button importButton = new Button("Import");
-  FusionTableService service;
-  File file;
-  String data;
-  AsyncCallback<String> callback;
+  private final FusionTableService service;
+  private final AsyncCallback<String> callback;
+  private DialogBox dialogBox = new DialogBox();
+  private Grid grid = new Grid(5, 2);
+  private TextBox tableIdBox = new TextBox();
+  private TextBox delimiterBox = new TextBox();
+  private TextBox offsetBox = new TextBox();
+  private TextBox importedBox = new TextBox();
+  private Button cancelButton = new Button("Cancel");
+  private Button importButton = new Button("Import");
+  private File file;
+  private String data;
   
   
   public ImportDialog(FusionTableService service, AsyncCallback<String> callback) {
+    this.service = service;
+    this.callback = callback;
+    dialogBox.setText("File Import");
     grid.setWidget(0, 0, new Label("Table Id"));
     grid.setWidget(0, 1, tableIdBox);
     grid.setWidget(1, 0, new Label("Delimited"));
@@ -73,11 +76,10 @@ public class ImportDialog {
   }
   
   public void show(File file, String data) {
-    dialogBox.setTitle(file.getName());
     this.file = file;
     this.data = data;
     setEnabled(true);
-    dialogBox.show();
+    dialogBox.center();
   }
   
   private void setEnabled(boolean b) {

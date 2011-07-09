@@ -33,6 +33,7 @@ public class Shell {
   FusionTableService service = new FusionTableService();
   boolean authenticating;
   OAuthToken requestToken;
+  Throwable trace;
   
   public static void main(String[] args) throws IOException {
     new Shell().run();
@@ -49,7 +50,7 @@ public class Shell {
       System.out.println("Using existing access token");
       showPrompt();
     } catch (Exception e) {
-      showError("Reading access token failed", null);
+      showError("Reading access token failed", e);
     }
   }
   
@@ -76,6 +77,13 @@ public class Shell {
           auth();
         } else if (cmd.startsWith("import ")) {
           importFile(cmd.substring(7).split(" "));
+        } else if (cmd.equals("trace")) {
+          if (trace == null) {
+            System.out.println("No stacktrace available.");
+          } else {
+            trace.printStackTrace(System.out);
+          }
+          showPrompt();
         } else {
           service.query(cmd, new SimpleCallback<Table>() {
             @Override
@@ -198,7 +206,9 @@ public class Shell {
     System.out.println("  auth         Authenticate client");
     System.out.println("  exit         Quit FT demo");
     System.out.println("  help         Show this help screen");
+    System.out.println("  trace        Show stack trace for last error");
     System.out.println("  import file <filename> [into <tableId>] [delimiter <delimiter>]");
+    System.out.println("               [offset <offset>]");
     System.out.println("               Import a bibtex or CSV file.");
     System.out.println();
     System.out.println("Fusion Table query examples");
@@ -219,17 +229,17 @@ public class Shell {
     System.out.println();
     if (message != null) {
       System.out.println(message);
+    } else if (caught != null) {
+      System.out.println("" + caught.getMessage());
     }
-    if (caught != null) {
-      caught.printStackTrace(System.out);
-    }
+    trace = caught;
     showPrompt();
   }
   
   abstract class SimpleCallback<T> implements AsyncCallback<T> {
     @Override
     public void onFailure(Throwable error) {
-      showError(error.getMessage(), null);
+      showError(error.getMessage(), error);
     }
   }
 
