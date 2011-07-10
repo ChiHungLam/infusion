@@ -23,3 +23,5 @@ syntax: regexp
 ^war/deploy\.sh$
 syntax: regexp
 ^war/infusion\.zip$
+syntax: regexp
+^\.token$
