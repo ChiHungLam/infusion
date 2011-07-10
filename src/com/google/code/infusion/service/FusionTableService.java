@@ -73,8 +73,14 @@ public class FusionTableService {
     int end = error.indexOf("</TITLE>");
     if (start != -1 && end != -1) {
       error = Util.xmlDecode(error.substring(start + 7, end));
+    } else {
+      start = error.indexOf("<title>");
+      end = error.indexOf("</title>");
+      if (start != -1 && end != -1) {
+        error = Util.xmlDecode(error.substring(start + 7, end));
+      }
     }
-    return error;
+    return error + " \n(Note: errors are often caused by missing authentication.)";
   }
   
 
