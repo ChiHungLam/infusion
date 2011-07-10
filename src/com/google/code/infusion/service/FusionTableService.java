@@ -126,5 +126,9 @@ public class FusionTableService {
       }
     });
   }
+  
+  public PreparedQuery prepare(Query query) {
+    return new PreparedQuery(this, query.toString());
+  }
 
 }
