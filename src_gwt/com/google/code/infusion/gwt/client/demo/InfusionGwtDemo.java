@@ -106,13 +106,11 @@ public class InfusionGwtDemo implements EntryPoint {
     Button submitButton = new Button("Submit");
     Button clearButton = new Button("Clear");
     Button authButton = new Button("Authenticate");
-    Button uploadButton = new Button("Import");
-    final FileUpload upload = new FileUpload();
+    Button importButton = new Button("Import");
     buttonPanel.add(submitButton);
     buttonPanel.add(clearButton);
     buttonPanel.add(authButton);
-//    buttonPanel.add(uploadButton);
-  //  upload.setVisible(false);
+    buttonPanel.add(importButton);
     
     SimplePanel sp = new SimplePanel();
     buttonPanel.add(sp);
@@ -122,8 +120,6 @@ public class InfusionGwtDemo implements EntryPoint {
         " <a href='http://code.google.com/apis/fusiontables/docs/developers_guide.html'" +
         " target='blank_'>API Guide</a> | <a href='http://code.google.com/p/infusion' " +
         "target='blank_'>Infusion Homepage</a> | Import: ");
-
-    buttonPanel.add(upload);
 
     FormPanel formPanel = new FormPanel();
     mainPanel.addSouth(buttonPanel, 2);
@@ -170,42 +166,20 @@ public class InfusionGwtDemo implements EntryPoint {
       }
     });
     
-    uploadButton.addClickHandler(new ClickHandler() {
+    importButton.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent event) {
-        InputElement.as(upload.getElement()).click();
+        if (importDialog == null) {
+          importDialog = new ImportDialog(service, 
+              new SimpleCallback<String>() {
+                @Override
+                public void onSuccess(String result) {
+                  println(result);
+                }} );
+        }
+        importDialog.show();
       }});
     
-    upload.addChangeHandler(new ChangeHandler() {
-      @Override
-      public void onChange(ChangeEvent event) {
-        final File file = FileUtil.getFile(upload.getElement(), 0);
-        println(file.getName());
-
-        new FileReaderBuilder().readAsText(file, "utf-8", new SimpleCallback<String>() {
-          @Override
-          public void onSuccess(String result) {
-            try {
-            println("file reader: load");
-            if (importDialog == null) {
-              importDialog = new ImportDialog(service, 
-                  new SimpleCallback<String>() {
-                    @Override
-                    public void onSuccess(String result) {
-                      println(result);
-                    }} );
-            }
-            println("calling show");
-            importDialog.show(file, result);
-            println("called show");
-            } catch(Exception e) {
-              println("Error: " + e);
-            }
-          }
-
-        });
-      }
-    });
   }
 
   
