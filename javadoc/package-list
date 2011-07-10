@@ -1,5 +1,6 @@
 com.google.code.infusion.demo
 com.google.code.infusion.gwt.client.demo
+com.google.code.infusion.gwt.client.file
 com.google.code.infusion.gwt.server
 com.google.code.infusion.importer
 com.google.code.infusion.json
