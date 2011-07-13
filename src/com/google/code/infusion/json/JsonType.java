@@ -3,7 +3,7 @@
  */
 package com.google.code.infusion.json;
 
-enum JsonType{
+public enum JsonType{
 	ARRAY,     // 0 
 	BOOLEAN,   // 1
 	NULL,      // 2
