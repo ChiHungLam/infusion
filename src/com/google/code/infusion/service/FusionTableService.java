@@ -87,7 +87,7 @@ public class FusionTableService {
   /**
    * Sends the given SQL command.
    */
-  public void query(String sql, final AsyncCallback<Table> callback) {
+  public void query(final String sql, final AsyncCallback<Table> callback) {
     String lSql = (sql.length() > 10 ? sql.substring(0, 10) : sql).toLowerCase();
     String url = BASE_URL + "?jsonCallback=callback";
     String data = "sql=" + Util.urlEncode(sql);
@@ -116,13 +116,13 @@ public class FusionTableService {
               "{'cols':['result'],'rows':[[" + 
               Util.quote(data.trim(), '"', true) +"]]}")));
         } else {
-          callback.onFailure(new RuntimeException(extractErrorMessage(data)));
+          callback.onFailure(new RuntimeException(extractErrorMessage(data) + " Query: " + sql));
         }
       }
 
       @Override
       public void onFailure(Throwable error) {
-        callback.onFailure(new RuntimeException(extractErrorMessage(error.toString())));
+        callback.onFailure(new RuntimeException(extractErrorMessage(error.toString()) + " Query: " + sql));
       }
     });
   }
