@@ -3,6 +3,7 @@ package com.google.code.infusion.service;
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.json.JsonObject;
 
+import com.google.code.infusion.util.ChainedCallback;
 import com.google.code.infusion.util.HttpRequestBuilder;
 import com.google.code.infusion.util.HttpResponse;
 import com.google.code.infusion.util.OAuthToken;
@@ -129,6 +130,11 @@ public class FusionTableService {
   
   public PreparedQuery prepare(Query query) {
     return new PreparedQuery(this, query.toString());
+  }
+
+  public void describe(String tableId, AsyncCallback<Table> callback) {
+    query("DESCRIBE " + Util.singleQuote(tableId), callback);
+    
   }
 
 }
