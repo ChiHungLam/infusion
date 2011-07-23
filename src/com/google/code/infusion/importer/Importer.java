@@ -9,14 +9,14 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class Importer {
   private final FusionTableService service;
-  private final JsonArray cols;
+  private final String[] cols;
   private final Iterator<JsonArray> rows;
   private final int offset;
   private final ImporterCallback callback;
   private String tableId;
   private int count;
   
-  Importer(FusionTableService service, final JsonArray cols, final Iterator<JsonArray> rows, int offset, ImporterCallback callback) {
+  Importer(FusionTableService service, final String[] cols, final Iterator<JsonArray> rows, int offset, ImporterCallback callback) {
     this.service = service;
     this.cols = cols;
     this.rows = rows;

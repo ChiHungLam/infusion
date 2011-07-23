@@ -209,10 +209,10 @@ public class InfusionGwtDemo implements EntryPoint {
         SafeHtmlBuilder sb = new SafeHtmlBuilder();
         sb.appendHtmlConstant("<table>");
         sb.appendHtmlConstant("<tr>");
-        for (int i = 0; i < result.getCols().length(); i++) {
+        for (String col: result.getCols()) {
           sb.appendHtmlConstant("<td>");
           sb.appendHtmlConstant("<b>");
-          sb.appendEscaped(result.getCols().getString(i));
+          sb.appendEscaped(col);
           sb.appendHtmlConstant("</b>");
           sb.appendHtmlConstant("</td>");
         }

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.net.URI;
+import java.util.Arrays;
 
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
@@ -88,7 +89,7 @@ public class Shell {
           service.query(cmd, new SimpleCallback<Table>() {
             @Override
             public void onSuccess(Table result) {
-              System.out.println(result.getCols().serialize());
+              System.out.println(Arrays.toString(result.getCols()));
               for (JsonArray row: result) {
                 System.out.println(row.serialize());
               }
@@ -156,10 +157,12 @@ public class Shell {
   
   private void importFile(String[] param) throws IOException {
     ImporterBuilder builder = new ImporterBuilder(service);
+    String fileName = null;
     for(int i = 0; i < param.length; i += 2) {
       String name = param[i];
       String value = param[i + 1];
       if (name.equals("file")) {
+        fileName = value;
         builder.setFileName(value);
       } else if (name.equals("into")) {
         builder.setTableId(value);
@@ -173,7 +176,7 @@ public class Shell {
         builder.setOffset(Integer.parseInt(value));
       }
     }
-    builder.setData(readFile(builder.getFileName()));
+    builder.setData(readFile(fileName));
     builder.importData(new ImporterCallback() {
       @Override
       public void onProgress(Importer importer) {
