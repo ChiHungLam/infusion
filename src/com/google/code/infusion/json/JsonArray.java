@@ -36,6 +36,13 @@ public class JsonArray  {
 		return (JsonObject) data.get(i).value;
 	}
 	
+   public final String getAsString(int index) {
+      Entry e = data.get(index);
+      return e == null ? "" : e.toString();
+   }
+
+	
+	
 	
 	public final String getString(int index) {
 		return (String) data.get(index).value;

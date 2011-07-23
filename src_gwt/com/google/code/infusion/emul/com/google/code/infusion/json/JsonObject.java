@@ -21,7 +21,9 @@ public class JsonObject extends JavaScriptObject {
 	private final native JsArrayString getKeysImpl() /*-{
 		var result = [];
 		for (key in this) {
+		  if (key != "__gwt_ObjectId") {
 			result.push(key);
+		  }
 		}
 		return result;
 	}-*/;
@@ -53,6 +55,10 @@ public class JsonObject extends JavaScriptObject {
 	public final native String getString(String key) /*-{
 		return this[key];
 	}-*/;
+	
+    public final native String getAsString(String key) /*-{
+       return this[key] ? "" + this[key] : "";
+    }-*/;
 	
 	public final native void setString(String key, String value) /*-{
 		this[key] = value;

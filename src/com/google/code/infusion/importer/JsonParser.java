@@ -19,7 +19,7 @@ public class JsonParser {
         if (idx == -1) {
           idx = table.addCol(key);
         }
-        newRow.setString(idx, o.getString(key));
+        newRow.setString(idx, o.getAsString(key));
       }
       table.addRow(newRow);
     }
