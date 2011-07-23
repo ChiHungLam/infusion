@@ -54,4 +54,8 @@ class Entry {
 			return "" + value;
 		}
 	}
+	
+	public String toString() {
+	  return "" + value;
+	}
 }

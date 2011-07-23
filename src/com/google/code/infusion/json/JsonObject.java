@@ -6,6 +6,8 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.print.DocFlavor.STRING;
+
 
 public class JsonObject {
 
@@ -79,6 +81,12 @@ public class JsonObject {
 		Entry e = data.get(key);
 		return e == null ? Entry.NULL : e;
 	}
+	
+	public final String getAsString(String key) {
+	  Entry e = data.get(key);
+	  return e == null ? "" : e.toString();
+	}
+	
 	
 	public final JsonArray getArray(String key) {
 		return (JsonArray) get(key).value;

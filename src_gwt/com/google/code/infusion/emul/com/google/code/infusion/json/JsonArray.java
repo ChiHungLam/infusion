@@ -42,6 +42,10 @@ public class JsonArray extends JavaScriptObject {
 		return this[index];
 	}-*/;
 
+	public final native String getAsString(int index) /*-{
+	  return  this[index] ? "" + this[index] : "";
+	}-*/;
+	
     public final native void setArray(int index, JsonArray value) /*-{
       this[index] = value;
     }-*/;
