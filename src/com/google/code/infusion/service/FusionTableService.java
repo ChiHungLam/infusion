@@ -42,7 +42,7 @@ public class FusionTableService {
       sb.append('(');
       StringBuilder values = new StringBuilder();
       for (int i = 0; i < Math.min(data.getColCount(), row.length()); i++) {
-        String value = row.getString(i);
+        String value = row.getAsString(i);
         if (value == null) {
           value = "";
         }
@@ -161,6 +161,7 @@ public class FusionTableService {
         add.setString(i, row.getAsString(key));
       }
     }
+    table.addRow(add);
     insert(tableId, table, new ChainedCallback<Table>(callback) {
       @Override
       public void onSuccess(Table result) {
@@ -181,10 +182,10 @@ public class FusionTableService {
       }
       sb.append(Util.singleQuote(keys[i]));
       sb.append("=");
-      sb.append(Util.singleQuote(row.getAsString(keys[i])));
+      sb.append(Util.quote(row.getAsString(keys[i]), '\'', true));
     }
     sb.append(" WHERE ROWID=");
-    sb.append(Util.singleQuote(rowId));
+    sb.append(Util.quote(rowId, '\'', true));
     query(sb.toString(), new ChainedCallback<Table>(callback) {
 
       @Override
