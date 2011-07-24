@@ -38,7 +38,7 @@ public class PreparedQuery {
 
   public void countEntities(FetchOptions fetchOptions, final AsyncCallback<Integer> callback) {
     String q = withFetchOptions(fetchOptions);
-    int cut = q.indexOf("FROM");
+    int cut = q.indexOf(" FROM ");
     q = "SELECT ROWID " + q.substring(cut);
     service.query(q,  new ChainedCallback<Table>(callback) {
       @Override
