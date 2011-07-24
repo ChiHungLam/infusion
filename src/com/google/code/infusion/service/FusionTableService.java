@@ -8,6 +8,7 @@ import com.google.code.infusion.util.HttpRequestBuilder;
 import com.google.code.infusion.util.HttpResponse;
 import com.google.code.infusion.util.OAuthToken;
 import com.google.code.infusion.util.Util;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class FusionTableService {
@@ -134,7 +135,62 @@ public class FusionTableService {
 
   public void describe(String tableId, AsyncCallback<Table> callback) {
     query("DESCRIBE " + Util.singleQuote(tableId), callback);
-    
   }
+  
+  public void insert(String tableId, JsonObject row, final AsyncCallback<String> callback) {
+    Table table = new Table(row.getKeys(), JsonArray.create());
+    JsonArray add = JsonArray.create();
+    for (int i = 0; i < table.getColCount(); i++) {
+      String key = table.getCol(i);
+      switch(row.getType(key)) {
+      case ARRAY:
+        add.setArray(i,row.getArray(key));
+        break;
+      case BOOLEAN:
+        add.setBoolean(i,row.getBoolean(key));
+        break;
+      case NULL:
+        break;
+      case NUMBER:
+        add.setNumber(i, row.getNumber(key));
+        break;
+      case OBJECT:
+        add.setObject(i, row.getObject(key));
+        break;
+      default:
+        add.setString(i, row.getAsString(key));
+      }
+    }
+    insert(tableId, table, new ChainedCallback<Table>(callback) {
+      @Override
+      public void onSuccess(Table result) {
+        callback.onSuccess(result.iterator().next().getAsString(0));
+      }
+      
+    });
+  }
+  
+  
+  public void update(String tableId, String rowId, JsonObject row, final AsyncCallback<Void> callback) {
+    StringBuilder sb = new StringBuilder("UPDATE ");
+    sb.append(Util.singleQuote(tableId)).append(" SET ");
+    String[] keys = row.getKeys();
+    for (int i = 0; i < keys.length; i++) {
+      if (i > 0) {
+        sb.append(',');
+      }
+      sb.append(Util.singleQuote(keys[i]));
+      sb.append("=");
+      sb.append(Util.singleQuote(row.getAsString(keys[i])));
+    }
+    sb.append(" WHERE ROWID=");
+    sb.append(Util.singleQuote(rowId));
+    query(sb.toString(), new ChainedCallback<Table>(callback) {
 
+      @Override
+      public void onSuccess(Table result) {
+        callback.onSuccess(null);
+      }
+    });
+  }
 }
