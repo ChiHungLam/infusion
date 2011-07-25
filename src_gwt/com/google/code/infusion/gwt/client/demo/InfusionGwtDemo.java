@@ -110,7 +110,6 @@ public class InfusionGwtDemo implements EntryPoint {
       }
     }
 
-    println("Enter sql queries at the bottom of this page.");
     println();
     DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.PX);
     FlowPanel buttonPanel = new FlowPanel();
@@ -121,22 +120,25 @@ public class InfusionGwtDemo implements EntryPoint {
     buttonPanel.add(formPanel);
     Label submitButton = createButton("Submit");
     submitButton.addStyleName("submit");
+    Label showTablesButton = createButton("Show Tables");
     Label clearButton = createButton("Clear");
     Label authButton = createButton("Authenticate");
     Label importButton = createButton("Import");
     buttonPanel.add(submitButton);
-    buttonPanel.add(clearButton);
-    buttonPanel.add(authButton);
+    buttonPanel.add(showTablesButton);
     buttonPanel.add(importButton);
+    buttonPanel.add(authButton);
+    buttonPanel.add(clearButton);
     
     SimplePanel sp = new SimplePanel();
     buttonPanel.add(sp);
     Element element = sp.getElement();
     sp.addStyleName("link-panel");
     element.setInnerHTML(
-        "<div><a href='http://code.google.com/apis/fusiontables/docs/developers_guide.html'" +
-        " target='blank_'>API Guide</a></div><div><a href='http://code.google.com/p/infusion' " +
-        "target='blank_'>Infusion Homepage</a></div>");
+        "<div><a href='http://code.google.com/p/infusion' " +
+        "target='blank_'>Infusion Homepage</a></div>"+
+    "<div><a href='http://code.google.com/apis/fusiontables/docs/developers_guide.html'" +
+    " target='blank_'>API Guide</a></div>");
 
     mainPanel.addNorth(buttonPanel, 101);
     scrollPanel.addStyleName("console");
@@ -152,7 +154,14 @@ public class InfusionGwtDemo implements EntryPoint {
         executeCommand();
       }
     });
-
+    
+    showTablesButton.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
+         executeCommand("show tables");
+      }});
+    
+    
     submitButton.addClickHandler(new ClickHandler() {
       @Override
       public void onClick(ClickEvent event) {
@@ -215,7 +224,10 @@ public class InfusionGwtDemo implements EntryPoint {
     if (lcmd.startsWith("select") && lcmd.indexOf("limit") == -1) {
       command += " limit 100";
     }
-    
+    executeCommand(command);
+  }
+  
+  private void executeCommand(String command) {
     println(command);
     service.query(command, new SimpleCallback<Table>() {
       @Override
