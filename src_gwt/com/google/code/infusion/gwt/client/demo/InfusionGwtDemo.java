@@ -12,6 +12,7 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
@@ -35,6 +36,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
+import com.google.gwt.user.client.ui.Widget;
 
 
 /**
@@ -52,6 +54,15 @@ public class InfusionGwtDemo implements EntryPoint {
   private TextBox inputBox = new TextBox();
   private ScrollPanel scrollPanel = new ScrollPanel(outputPanel);
   private ImportDialog importDialog;
+  
+  
+  Label createButton(String label) {
+    Label button = new Label(label);
+    button.addStyleName("button");
+    return button;
+  }
+  
+  
   
   /**
    * This is the entry point method.
@@ -101,12 +112,18 @@ public class InfusionGwtDemo implements EntryPoint {
 
     println("Enter sql queries at the bottom of this page.");
     println();
-    DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
+    DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.PX);
     FlowPanel buttonPanel = new FlowPanel();
-    Button submitButton = new Button("Submit");
-    Button clearButton = new Button("Clear");
-    Button authButton = new Button("Authenticate");
-    Button importButton = new Button("Import");
+    buttonPanel.addStyleName("topbar");
+    FormPanel formPanel = new FormPanel();
+    formPanel.add(inputBox);
+    inputBox.addStyleName("query");
+    buttonPanel.add(formPanel);
+    Label submitButton = createButton("Submit");
+    submitButton.addStyleName("submit");
+    Label clearButton = createButton("Clear");
+    Label authButton = createButton("Authenticate");
+    Label importButton = createButton("Import");
     buttonPanel.add(submitButton);
     buttonPanel.add(clearButton);
     buttonPanel.add(authButton);
@@ -115,21 +132,19 @@ public class InfusionGwtDemo implements EntryPoint {
     SimplePanel sp = new SimplePanel();
     buttonPanel.add(sp);
     Element element = sp.getElement();
-    element.getStyle().setDisplay(Display.INLINE);
+    sp.addStyleName("link-panel");
     element.setInnerHTML(
-        " <a href='http://code.google.com/apis/fusiontables/docs/developers_guide.html'" +
-        " target='blank_'>API Guide</a> | <a href='http://code.google.com/p/infusion' " +
-        "target='blank_'>Infusion Homepage</a> | Import: ");
+        "<div><a href='http://code.google.com/apis/fusiontables/docs/developers_guide.html'" +
+        " target='blank_'>API Guide</a></div><div><a href='http://code.google.com/p/infusion' " +
+        "target='blank_'>Infusion Homepage</a></div>");
 
-    FormPanel formPanel = new FormPanel();
-    mainPanel.addSouth(buttonPanel, 2);
-    mainPanel.addSouth(formPanel, 2);    
+    mainPanel.addNorth(buttonPanel, 101);
+    scrollPanel.addStyleName("console");
     mainPanel.add(scrollPanel);
     
     RootLayoutPanel.get().add(mainPanel);
     
-    formPanel.add(inputBox);
-    inputBox.getElement().getStyle().setWidth(100, Unit.PCT);
+  //  inputBox.getElement().getStyle().setWidth(100, Unit.PCT);
     inputBox.setText("select * from 197026");
     formPanel.addSubmitHandler(new SubmitHandler() {
       @Override
