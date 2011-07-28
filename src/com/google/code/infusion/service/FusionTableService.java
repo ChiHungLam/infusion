@@ -137,52 +137,22 @@ public class FusionTableService {
     query("DESCRIBE " + Util.singleQuote(tableId), callback);
   }
   
-  public void insert(String tableId, JsonObject row, final AsyncCallback<String> callback) {
-    Table table = new Table(row.getKeys(), JsonArray.create());
-    JsonArray add = JsonArray.create();
-    for (int i = 0; i < table.getColCount(); i++) {
-      String key = table.getCol(i);
-      switch(row.getType(key)) {
-      case ARRAY:
-        add.setArray(i,row.getArray(key));
-        break;
-      case BOOLEAN:
-        add.setBoolean(i,row.getBoolean(key));
-        break;
-      case NULL:
-        break;
-      case NUMBER:
-        add.setNumber(i, row.getNumber(key));
-        break;
-      case OBJECT:
-        add.setObject(i, row.getObject(key));
-        break;
-      default:
-        add.setString(i, row.getAsString(key));
-      }
+  
+  
+  public void update(String tableId, String rowId, Table data, final AsyncCallback<Void> callback) {
+    if (data.getRowCount() != 1) {
+      throw new IllegalArgumentException("Table must have exactly one row for update.");
     }
-    table.addRow(add);
-    insert(tableId, table, new ChainedCallback<Table>(callback) {
-      @Override
-      public void onSuccess(Table result) {
-        callback.onSuccess(result.iterator().next().getAsString(0));
-      }
-      
-    });
-  }
-  
-  
-  public void update(String tableId, String rowId, JsonObject row, final AsyncCallback<Void> callback) {
     StringBuilder sb = new StringBuilder("UPDATE ");
     sb.append(Util.singleQuote(tableId)).append(" SET ");
-    String[] keys = row.getKeys();
-    for (int i = 0; i < keys.length; i++) {
+    JsonArray row = data.iterator().next();
+    for (int i = 0; i < data.getRowCount(); i++) {
       if (i > 0) {
         sb.append(',');
       }
-      sb.append(Util.singleQuote(keys[i]));
+      sb.append(Util.singleQuote(data.getCol(i)));
       sb.append("=");
-      sb.append(Util.quote(row.getAsString(keys[i]), '\'', true));
+      sb.append(Util.quote(row.getAsString(i), '\'', true));
     }
     sb.append(" WHERE ROWID=");
     sb.append(Util.quote(rowId, '\'', true));
