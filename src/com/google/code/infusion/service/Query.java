@@ -114,12 +114,18 @@ public class Query {
     }
 
     public String toString() {
-      return propertyName
-      + " "
-      + operator
-      + " "
-      + ((value instanceof String) ? Util.singleQuote((String) value)
-          : "" + value);
+      StringBuilder sb = new StringBuilder(Util.singleQuote(propertyName));
+      sb.append(' ');
+      sb.append(operator);
+      sb.append(' ');
+      if (value == null) {
+        sb.append("");
+      } else if (value instanceof Number) {
+        sb.append(value.toString());
+      } else {
+        sb.append(Util.quote(value.toString(), '\'', true));
+      }
+      return sb.toString();
     }
   }
 
@@ -142,7 +148,7 @@ public class Query {
     sb.append(" FROM ");
     sb.append(kind);
     for (int i = 0; i < filterPredicates.size(); i++) {
-      sb.append(i == 0 ? " WHERE" : " AND ");
+      sb.append(i == 0 ? " WHERE " : " AND ");
       sb.append(filterPredicates.get(i).toString());
     }
     return sb.toString();
