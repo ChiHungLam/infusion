@@ -1,6 +1,5 @@
 package com.google.code.infusion.service;
 
-import java.util.Timer;
 import java.util.TimerTask;
 
 import com.google.code.infusion.json.JsonArray;
@@ -10,6 +9,7 @@ import com.google.code.infusion.util.ChainedCallback;
 import com.google.code.infusion.util.HttpRequestBuilder;
 import com.google.code.infusion.util.HttpResponse;
 import com.google.code.infusion.util.OAuthToken;
+import com.google.code.infusion.util.Timer;
 import com.google.code.infusion.util.Util;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -17,12 +17,13 @@ public class FusionTableService {
 
   private static String BASE_URL = "https://www.google.com/fusiontables/api/query";
   public static String SCOPE = BASE_URL;
-  private static final int REQUEST_TIME_DISTANCE = 300;
+  private static final int REQUEST_TIME_DISTANCE = 500;
   private static final int MAX_PARALLEL_REQUESTS = 2;
   
   private OAuthToken token;
   private Timer timer = new Timer();
   private long lastRequest;
+  private long lastScheduledRequest;
   private int pendingRequests;
   
   public void setAccessToken(OAuthToken token) {
@@ -99,17 +100,18 @@ public class FusionTableService {
    */
   public void query(final String sql, final AsyncCallback<Table> callback) {
     boolean tooMany = pendingRequests > MAX_PARALLEL_REQUESTS;
-    if (System.currentTimeMillis() - lastRequest < REQUEST_TIME_DISTANCE || tooMany) {
-      long add = REQUEST_TIME_DISTANCE + (tooMany ? REQUEST_TIME_DISTANCE : 0);
+    long now = System.currentTimeMillis();
+    if (now - lastRequest < REQUEST_TIME_DISTANCE || tooMany) {
+      lastScheduledRequest = Math.max(now  + (tooMany ? REQUEST_TIME_DISTANCE : 1), 
+          lastScheduledRequest + REQUEST_TIME_DISTANCE);
       timer.schedule(new TimerTask() {
         @Override
         public void run() {
           query(sql, callback);
-        }}, System.currentTimeMillis() - lastRequest + add);
-      lastRequest += add;
+        }}, lastScheduledRequest - now);
       return;
     }
-    lastRequest = System.currentTimeMillis();
+    lastRequest = Math.max(lastRequest, System.currentTimeMillis());
     pendingRequests++;
     
     String lSql = (sql.length() > 10 ? sql.substring(0, 10) : sql).toLowerCase();
