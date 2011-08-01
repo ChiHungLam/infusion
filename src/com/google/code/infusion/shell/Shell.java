@@ -31,7 +31,7 @@ public class Shell {
   static final String TOKEN_FILE = ".token";
   
   BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-  FusionTableService service = new FusionTableService();
+  protected FusionTableService service = new FusionTableService();
   boolean authenticating;
   OAuthToken requestToken;
   Throwable trace;
@@ -40,7 +40,7 @@ public class Shell {
     new Shell().run();
   }
 
-  private void init() {
+  protected void init() {
     try {
       String tokenString = readFile(TOKEN_FILE);
       OAuthToken token = new OAuthToken();
@@ -56,7 +56,7 @@ public class Shell {
   }
   
   
-  private void run() throws IOException {
+  protected void run() throws IOException {
     showHelp();
     init();
     
@@ -66,43 +66,48 @@ public class Shell {
         if (requestToken != null) {
           getAccessToken(requestToken, cmd);
           requestToken = null;
-          continue;
-        } 
-        String lcmd = cmd.toLowerCase();
-        if ("exit".equals(lcmd) || "quit".equals(lcmd)) {
+        } else if (!processCommand(cmd)) {
           break;
-        } else if ("?".equals(lcmd) || "help".equals(lcmd)) {
-          showHelp();
-          showPrompt();
-        } else if (lcmd.equals("auth")) {
-          auth();
-        } else if (cmd.startsWith("import ")) {
-          importFile(cmd.substring(7).split(" "));
-        } else if (cmd.equals("trace")) {
-          if (trace == null) {
-            System.out.println("No stacktrace available.");
-          } else {
-            trace.printStackTrace(System.out);
-          }
-          showPrompt();
-        } else {
-          service.query(cmd, new SimpleCallback<Table>() {
-            @Override
-            public void onSuccess(Table result) {
-              System.out.println(Arrays.toString(result.getCols()));
-              for (JsonArray row: result) {
-                System.out.println(row.serialize());
-              }
-              showPrompt();
-            }});
         }
-      } catch (IOException e) {
+      } catch (Exception e) {
         showError(null, e);
       }
     }
     println("Good bye!");
   }
 
+  protected boolean processCommand(String cmd) throws Exception {
+    String lcmd = cmd.toLowerCase();
+    if ("exit".equals(lcmd) || "quit".equals(lcmd)) {
+      return false;
+    } else if ("?".equals(lcmd) || "help".equals(lcmd)) {
+      showHelp();
+      showPrompt();
+    } else if (lcmd.equals("auth")) {
+      auth();
+    } else if (cmd.startsWith("import ")) {
+      importFile(cmd.substring(7).split(" "));
+    } else if (cmd.equals("trace")) {
+      if (trace == null) {
+        System.out.println("No stacktrace available.");
+      } else {
+        trace.printStackTrace(System.out);
+      }
+      showPrompt();
+    } else {
+      service.query(cmd, new SimpleCallback<Table>() {
+        @Override
+        public void onSuccess(Table result) {
+          System.out.println(Arrays.toString(result.getCols()));
+          for (JsonArray row: result) {
+            System.out.println(row.serialize());
+          }
+          showPrompt();
+        }});
+    }
+    return true;
+  }
+  
   private void auth() {
     OAuthLogin.getRequestToken(FusionTableService.SCOPE, null, new SimpleCallback<OAuthToken>() {
       @Override
@@ -239,7 +244,7 @@ public class Shell {
     showPrompt();
   }
   
-  abstract class SimpleCallback<T> implements AsyncCallback<T> {
+  public abstract class SimpleCallback<T> implements AsyncCallback<T> {
     @Override
     public void onFailure(Throwable error) {
       showError(error.getMessage(), error);
