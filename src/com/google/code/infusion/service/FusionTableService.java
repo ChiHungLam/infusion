@@ -1,5 +1,8 @@
 package com.google.code.infusion.service;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.json.JsonObject;
 
@@ -8,16 +11,20 @@ import com.google.code.infusion.util.HttpRequestBuilder;
 import com.google.code.infusion.util.HttpResponse;
 import com.google.code.infusion.util.OAuthToken;
 import com.google.code.infusion.util.Util;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 public class FusionTableService {
 
   private static String BASE_URL = "https://www.google.com/fusiontables/api/query";
   public static String SCOPE = BASE_URL;
+  private static final int REQUEST_TIME_DISTANCE = 300;
+  private static final int MAX_PARALLEL_REQUESTS = 2;
   
   private OAuthToken token;
-
+  private Timer timer = new Timer();
+  private long lastRequest;
+  private int pendingRequests;
+  
   public void setAccessToken(OAuthToken token) {
     this.token = token;
   }
@@ -88,8 +95,23 @@ public class FusionTableService {
 
   /**
    * Sends the given SQL command.
+   * TODO(Use a queue instead, FIFO write, LIFO read(?))
    */
   public void query(final String sql, final AsyncCallback<Table> callback) {
+    boolean tooMany = pendingRequests > MAX_PARALLEL_REQUESTS;
+    if (System.currentTimeMillis() - lastRequest < REQUEST_TIME_DISTANCE || tooMany) {
+      long add = REQUEST_TIME_DISTANCE + (tooMany ? REQUEST_TIME_DISTANCE : 0);
+      timer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          query(sql, callback);
+        }}, System.currentTimeMillis() - lastRequest + add);
+      lastRequest += add;
+      return;
+    }
+    lastRequest = System.currentTimeMillis();
+    pendingRequests++;
+    
     String lSql = (sql.length() > 10 ? sql.substring(0, 10) : sql).toLowerCase();
     String url = BASE_URL + "?jsonCallback=callback";
     String data = "sql=" + Util.urlEncode(sql);
@@ -107,6 +129,7 @@ public class FusionTableService {
     request.setData(data);
     request.send(new AsyncCallback<HttpResponse>() {
       public void onSuccess(HttpResponse response) {
+        pendingRequests--;
         String data = response.getData();
         if (data.startsWith("callback")) {
           int start = data.indexOf('(');
@@ -124,6 +147,7 @@ public class FusionTableService {
 
       @Override
       public void onFailure(Throwable error) {
+        pendingRequests++;
         callback.onFailure(new RuntimeException(extractErrorMessage(error.toString()) + " Query: " + sql));
       }
     });
@@ -163,5 +187,31 @@ public class FusionTableService {
         callback.onSuccess(null);
       }
     });
+  }
+
+  public void createTable(String name, Table table, final AsyncCallback<String> callback) {
+    StringBuilder sb = new StringBuilder("CREATE TABLE ");
+    sb.append(Util.singleQuote(name));
+    sb.append("(");
+    boolean first = true;
+    for (JsonArray row: table) {
+      if (first) {
+        first = false;
+      } else {
+        sb.append(',');
+      }
+      sb.append(Util.quote(row.getString(0), '\'', true));
+      sb.append(':');
+      sb.append(row.getString(1));
+    }
+    sb.append(')');
+    query(sb.toString(), new ChainedCallback<Table>(callback) {
+
+      @Override
+      public void onSuccess(Table result) {
+        callback.onSuccess(result.iterator().next().getAsString(0));
+      }
+    });
+    
   }
 }
