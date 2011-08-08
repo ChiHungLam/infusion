@@ -1,6 +1,9 @@
 package com.google.code.infusion.service;
 
+import java.util.ArrayList;
 import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.code.infusion.json.JsonArray;
 import com.google.code.infusion.json.JsonObject;
@@ -23,9 +26,11 @@ public class FusionTableService {
   private OAuthToken token;
   private Timer timer = new Timer();
   private long lastRequest;
-  private long lastScheduledRequest;
-  private int pendingRequests;
+  private int runningRequestCount;
+
   
+  ArrayList<Request> requestQueue = new ArrayList<Request>();
+
   public void setAccessToken(OAuthToken token) {
     this.token = token;
   }
@@ -98,22 +103,55 @@ public class FusionTableService {
    * Sends the given SQL command.
    * TODO(Use a queue instead, FIFO write, LIFO read(?))
    */
-  public void query(final String sql, final AsyncCallback<Table> callback) {
-    boolean tooMany = pendingRequests > MAX_PARALLEL_REQUESTS;
+  public Request query(String sql, AsyncCallback<Table> callback) {
+    Request request = new Request(this, sql, callback);
+    if (requestQueue.size() > 0) {
+      requestQueue.add(request);
+      return request;
+    }
+
+    boolean tooMany = runningRequestCount > MAX_PARALLEL_REQUESTS;
     long now = System.currentTimeMillis();
     if (now - lastRequest < REQUEST_TIME_DISTANCE || tooMany) {
-      lastScheduledRequest = Math.max(now  + (tooMany ? REQUEST_TIME_DISTANCE : 1), 
-          lastScheduledRequest + REQUEST_TIME_DISTANCE);
+      long dT = Math.max(tooMany ? REQUEST_TIME_DISTANCE : 1, 
+          now - lastRequest + REQUEST_TIME_DISTANCE);
+      Logger.getLogger("FTS").log(Level.INFO, "Dt:" + dT);
+      requestQueue.add(request);
       timer.schedule(new TimerTask() {
         @Override
         public void run() {
-          query(sql, callback);
-        }}, lastScheduledRequest - now);
-      return;
+          processRequestQueue();
+        }}, dT);
+    } else {
+      request.execute();
     }
-    lastRequest = Math.max(lastRequest, System.currentTimeMillis());
-    pendingRequests++;
+    return request;
+  }
+  
+  void processRequestQueue() {
     
+
+    Logger.getLogger("FTS").log(Level.INFO, "pRQ queue.size():" + requestQueue.size() + " pending: "+runningRequestCount);
+    
+    
+    if (runningRequestCount < MAX_PARALLEL_REQUESTS && requestQueue.size() > 0) {
+      requestQueue.remove(0).execute();
+    } 
+    
+    if (requestQueue.size() > 0) {
+      
+      timer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          processRequestQueue();
+        }}, REQUEST_TIME_DISTANCE);
+    }
+  }
+  
+  
+  void queryImpl(final String sql, final AsyncCallback<Table> callback) {
+    lastRequest = System.currentTimeMillis();
+    runningRequestCount++;
     String lSql = (sql.length() > 10 ? sql.substring(0, 10) : sql).toLowerCase();
     String url = BASE_URL + "?jsonCallback=callback";
     String data = "sql=" + Util.urlEncode(sql);
@@ -131,7 +169,7 @@ public class FusionTableService {
     request.setData(data);
     request.send(new AsyncCallback<HttpResponse>() {
       public void onSuccess(HttpResponse response) {
-        pendingRequests--;
+        runningRequestCount--;
         String data = response.getData();
         if (data.startsWith("callback")) {
           int start = data.indexOf('(');
@@ -149,7 +187,7 @@ public class FusionTableService {
 
       @Override
       public void onFailure(Throwable error) {
-        pendingRequests++;
+        runningRequestCount--;
         callback.onFailure(new RuntimeException(extractErrorMessage(error.toString()) + " Query: " + sql));
       }
     });
