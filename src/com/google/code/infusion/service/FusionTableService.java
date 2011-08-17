@@ -131,11 +131,11 @@ public class FusionTableService {
   void processRequestQueue() {
     
 
-    Logger.getLogger("FTS").log(Level.INFO, "pRQ queue.size():" + requestQueue.size() + " pending: "+runningRequestCount);
+    Logger.getLogger("FTS").log(Level.INFO, "processRequestQueue; queued:" + requestQueue.size() + " running: "+runningRequestCount);
     
     
     if (runningRequestCount < MAX_PARALLEL_REQUESTS && requestQueue.size() > 0) {
-      requestQueue.remove(0).execute();
+      requestQueue.remove(requestQueue.size() - 1).execute();
     } 
     
     if (requestQueue.size() > 0) {

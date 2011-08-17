@@ -19,6 +19,12 @@ public class Request {
     service.queryImpl(query, callback);
   }
   
+  public void setBackgroundPriority() {
+    if (service.requestQueue.remove(this)) {
+      service.requestQueue.add(0, this);
+    }
+  }
+  
   public void cancel() {
     service.requestQueue.remove(this);
   }

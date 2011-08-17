@@ -28,8 +28,8 @@ public class PreparedQuery {
     return sb.toString();
   }
   
-  public void asTable(FetchOptions fetchOptions, AsyncCallback<Table> callback) {
-    service.query(withFetchOptions(fetchOptions), callback);
+  public Request asTable(FetchOptions fetchOptions, AsyncCallback<Table> callback) {
+    return service.query(withFetchOptions(fetchOptions), callback);
   }
   
   public void asTable(AsyncCallback<Table> callback) {
