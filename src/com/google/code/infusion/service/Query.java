@@ -141,7 +141,7 @@ public class Query {
         if (i > 0) {
           sb.append(',');
         }
-        sb.append(Util.singleQuote(columnNames.get(i)));
+        sb.append(Util.quote(columnNames.get(i), '\'', true));
       }
     }
 
