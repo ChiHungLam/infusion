@@ -9,13 +9,13 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  */
 public abstract class ChainedCallback<T> implements AsyncCallback<T> {
 
-	private final AsyncCallback<?> callback;
+  private final AsyncCallback<?> callback;
 
-	public ChainedCallback(final AsyncCallback<?> callback) {
-		this.callback = callback;
-	}
-	
-	public final void onFailure(Throwable caught) {
-		callback.onFailure(caught);
-	}
+  public ChainedCallback(final AsyncCallback<?> callback) {
+    this.callback = callback;
+  }
+
+  public final void onFailure(Throwable caught) {
+    callback.onFailure(new Throwable(caught));
+  }
 }
