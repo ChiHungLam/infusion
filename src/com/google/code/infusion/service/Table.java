@@ -1,7 +1,6 @@
 package com.google.code.infusion.service;
 
-import com.google.code.infusion.json.JsonArray;
-import com.google.code.infusion.json.JsonObject;
+import com.google.code.infusion.json.Json;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,22 +11,22 @@ import java.util.Iterator;
  * 
  * @author Stefan Haustein
  */
-public class Table implements Iterable<JsonArray> {
-  JsonArray cols;
-  JsonArray rows;
+public class Table implements Iterable<Json> {
+  Json cols;
+  Json rows;
   private HashMap<String,Integer> map = new HashMap<String,Integer>();
   
-  Table(JsonObject table) {
-    this(table.getArray("cols"), table.getArray("rows"));
+  Table(Json table) {
+    this(table.getJson("cols"), table.getJson("rows"));
   }
   
-  public Table(JsonArray cols, JsonArray rows) {
+  public Table(Json cols, Json rows) {
     this.cols = cols;
     this.rows = rows;
   }
   
-  public Table(String[] cols, JsonArray rows) {
-    this.cols = JsonArray.create();
+  public Table(String[] cols, Json rows) {
+    this.cols = Json.createArray();
     this.rows = rows;
     for (int i = 0; i < cols.length; i++) {
       this.cols.setString(i, cols[i]);
@@ -75,13 +74,13 @@ public class Table implements Iterable<JsonArray> {
     return rows.length();
   }
 
-  public void addRow(JsonArray row) {
-    rows.setArray(rows.length(), row);
+  public void addRow(Json row) {
+    rows.setJson(rows.length(), row);
   }
 
   @Override
-  public Iterator<JsonArray> iterator() {
-    return new Iterator<JsonArray>() {
+  public Iterator<Json> iterator() {
+    return new Iterator<Json>() {
       int index;
       
       @Override
@@ -90,8 +89,8 @@ public class Table implements Iterable<JsonArray> {
       }
 
       @Override
-      public JsonArray next() {
-        return rows.getArray(index++);
+      public Json next() {
+        return rows.getJson(index++);
       }
 
       @Override

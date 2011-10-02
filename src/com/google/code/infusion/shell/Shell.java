@@ -17,7 +17,7 @@ import com.google.code.infusion.service.Table;
 import com.google.code.infusion.importer.Importer;
 import com.google.code.infusion.importer.ImporterBuilder;
 import com.google.code.infusion.importer.ImporterCallback;
-import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.json.Json;
 import com.google.code.infusion.util.OAuthLogin;
 import com.google.code.infusion.util.OAuthToken;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -99,7 +99,7 @@ public class Shell {
         @Override
         public void onSuccess(Table result) {
           System.out.println(Arrays.toString(result.getCols()));
-          for (JsonArray row: result) {
+          for (Json row: result) {
             System.out.println(row.serialize());
           }
           showPrompt();

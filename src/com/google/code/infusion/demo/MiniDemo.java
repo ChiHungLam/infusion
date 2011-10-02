@@ -1,6 +1,6 @@
 package com.google.code.infusion.demo;
 
-import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.json.Json;
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -15,7 +15,7 @@ public class MiniDemo {
     service.query("select * from 197026", new AsyncCallback<Table>() {
       @Override
       public void onSuccess(Table result) {
-        for (JsonArray row: result) {
+        for (Json row: result) {
           System.out.println(row.serialize());
         }
       }

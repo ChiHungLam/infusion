@@ -3,7 +3,7 @@ package com.google.code.infusion.gwt.client.demo;
 import com.google.code.infusion.gwt.client.file.File;
 import com.google.code.infusion.gwt.client.file.FileReaderBuilder;
 import com.google.code.infusion.gwt.client.file.FileUtil;
-import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.json.Json;
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
 import com.google.code.infusion.util.OAuthLogin;
@@ -244,7 +244,7 @@ public class InfusionGwtDemo implements EntryPoint {
           sb.appendHtmlConstant("</td>");
         }
         sb.appendHtmlConstant("</tr>");
-        for (JsonArray row:  result) {
+        for (Json row:  result) {
           sb.appendHtmlConstant("<tr>");
           for (int j = 0; j < row.length(); j++) {
             sb.appendHtmlConstant("<td>");

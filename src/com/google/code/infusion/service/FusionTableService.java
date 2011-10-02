@@ -5,8 +5,7 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.code.infusion.json.JsonArray;
-import com.google.code.infusion.json.JsonObject;
+import com.google.code.infusion.json.Json;
 
 import com.google.code.infusion.util.ChainedCallback;
 import com.google.code.infusion.util.HttpRequestBuilder;
@@ -46,7 +45,7 @@ public class FusionTableService {
   public void insert(final String tableId, final Table data, final AsyncCallback<Table> callback) {
     StringBuilder sb = new StringBuilder();
     int count = 0;
-    for(JsonArray row: data) {
+    for(Json row: data) {
       if (count == 1) {
         sb.append(";\n");
       }
@@ -174,10 +173,10 @@ public class FusionTableService {
         if (data.startsWith("callback")) {
           int start = data.indexOf('(');
           int end = data.lastIndexOf(')');
-          JsonObject jso = JsonObject.parse(data.substring(start + 1, end));
-          callback.onSuccess(new Table(jso.getObject("table")));
+          Json jso = Json.parse(data.substring(start + 1, end));
+          callback.onSuccess(new Table(jso.getJson("table")));
         } else if (!data.trim().startsWith("<")) {
-          callback.onSuccess(new Table(JsonObject.parse(
+          callback.onSuccess(new Table(Json.parse(
               "{'cols':['result'],'rows':[[" + 
               Util.quote(data.trim(), '"', true) +"]]}")));
         } else {
@@ -209,7 +208,7 @@ public class FusionTableService {
     }
     StringBuilder sb = new StringBuilder("UPDATE ");
     sb.append(Util.singleQuote(tableId)).append(" SET ");
-    JsonArray row = data.iterator().next();
+    Json row = data.iterator().next();
     for (int i = 0; i < data.getRowCount(); i++) {
       if (i > 0) {
         sb.append(',');
@@ -234,7 +233,7 @@ public class FusionTableService {
     sb.append(Util.singleQuote(name));
     sb.append("(");
     boolean first = true;
-    for (JsonArray row: table) {
+    for (Json row: table) {
       if (first) {
         first = false;
       } else {

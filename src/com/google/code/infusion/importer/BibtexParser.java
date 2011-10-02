@@ -2,7 +2,7 @@ package com.google.code.infusion.importer;
 
 import java.util.HashMap;
 
-import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.json.Json;
 import com.google.code.infusion.service.Table;
 
 /**
@@ -12,7 +12,7 @@ import com.google.code.infusion.service.Table;
 public class BibtexParser {
   private LookAheadReader reader;
   private boolean eof;
-  private JsonArray cols = JsonArray.create();
+  private Json cols = Json.createArray();
   private HashMap<String,Integer> map = new HashMap<String,Integer>();
   
   static String[] CODES = {
@@ -60,13 +60,13 @@ public class BibtexParser {
   public static Table parse(String bibtex) {
     BibtexParser parser = new BibtexParser(bibtex);
     
-    JsonArray rows = JsonArray.create();
+    Json rows = Json.createArray();
     while (true) {
-      JsonArray row = parser.readRow();
+      Json row = parser.readRow();
       if (row == null) {
         break;
       }
-      rows.setArray(rows.length(), row);
+      rows.setJson(rows.length(), row);
     }
     return new Table(parser.cols, rows);
   }
@@ -105,12 +105,12 @@ public class BibtexParser {
   }
   
   
-  private JsonArray readRow() {
+  private Json readRow() {
     if (eof) {
       return null;
     }
 
-    JsonArray result = JsonArray.create();
+    Json result = Json.createArray();
 
     reader.readTo("@<*");
     int i = reader.read();
@@ -162,7 +162,7 @@ public class BibtexParser {
   }
 
 
-  private boolean readLine(JsonArray result) {
+  private boolean readLine(Json result) {
     StringBuffer valueBuf = new StringBuffer();
     String id = reader.readTo("}=").trim().toLowerCase();
     if (reader.read() == '}') {

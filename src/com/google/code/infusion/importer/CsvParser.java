@@ -2,7 +2,7 @@ package com.google.code.infusion.importer;
 
 import java.util.Iterator;
 
-import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.json.Json;
 import com.google.code.infusion.service.Table;
 
 /**
@@ -10,7 +10,7 @@ import com.google.code.infusion.service.Table;
  * 
  * @author Stefan Haustein
  */
-public class CsvParser implements Iterator<JsonArray>{
+public class CsvParser implements Iterator<Json>{
   static final String EOL = "<EOL>";
   static final String EOF = "<EOF>";
 
@@ -18,7 +18,7 @@ public class CsvParser implements Iterator<JsonArray>{
   protected char commentsChar;
   private char delimiter;
   private String readTo;
-  JsonArray currentRow;
+  Json currentRow;
 
   /**
    * Parses the given string as a table in CSV format and returns
@@ -26,7 +26,7 @@ public class CsvParser implements Iterator<JsonArray>{
    */
   public static Table parse(final String csv, final char delimiter) {
     CsvParser parser = new CsvParser(csv, delimiter);
-    Table table = new Table(parser.next(), JsonArray.create());
+    Table table = new Table(parser.next(), Json.createArray());
     while(parser.hasNext()) {
       table.addRow(parser.next());
     }
@@ -39,8 +39,8 @@ public class CsvParser implements Iterator<JsonArray>{
     this.readTo = "\n\r" + delimiter;
   }
 
-  private JsonArray readRow() {
-    JsonArray row = JsonArray.create();
+  private Json readRow() {
+    Json row = Json.createArray();
 
     String val = null;
     int i = 0;
@@ -133,11 +133,11 @@ public class CsvParser implements Iterator<JsonArray>{
   }
 
   @Override
-  public JsonArray next() {
+  public Json next() {
     if (!hasNext()) {
       throw new IllegalStateException();
     }
-    JsonArray result = currentRow;
+    Json result = currentRow;
     currentRow = null;
     return result;
   }

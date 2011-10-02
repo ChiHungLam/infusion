@@ -8,12 +8,12 @@ import java.io.StreamTokenizer;
  * of JsonArray and JsonObject.
  */
 class Entry {
-	static final Entry NULL = new Entry(JsonType.NULL, null);
+	static final Entry NULL = new Entry(Json.Type.NULL, null);
 	
-	final JsonType type;
+	final Json.Type type;
 	final Object value;
 	
-	Entry(JsonType type, Object value) {
+	Entry(Json.Type type, Object value) {
 		this.type = type;
 		this.value = value;
 	}
@@ -21,22 +21,21 @@ class Entry {
 	public static Entry parse(StreamTokenizer tokenizer) throws IOException {
 		switch(tokenizer.ttype) {
 		case  '[':
-			return new Entry(JsonType.ARRAY, JsonArray.parse(tokenizer));
 		case '{':
-			return new Entry(JsonType.OBJECT, JsonObject.parse(tokenizer));
+			return new Entry(Json.Type.OBJECT, Json.parse(tokenizer));
 		case '"':
 		case '\'':
-			return new Entry(JsonType.STRING, tokenizer.sval);
+			return new Entry(Json.Type.STRING, tokenizer.sval);
 		case StreamTokenizer.TT_WORD:
 			if (tokenizer.sval.equals("true")) {
-				return new Entry(JsonType.BOOLEAN, Boolean.TRUE);
+				return new Entry(Json.Type.BOOLEAN, Boolean.TRUE);
 			}
 			if (tokenizer.sval.equals("false")) {
-				return new Entry(JsonType.BOOLEAN, Boolean.FALSE);
+				return new Entry(Json.Type.BOOLEAN, Boolean.FALSE);
 			}
 			throw new RuntimeException("Expected true or false; actual: " + tokenizer.sval);
 		case StreamTokenizer.TT_NUMBER:
-			return new Entry(JsonType.NUMBER, tokenizer.nval);
+			return new Entry(Json.Type.NUMBER, tokenizer.nval);
 		default:
 			throw new RuntimeException("Unexpected token: " + tokenizer.toString());
 		}
@@ -44,12 +43,10 @@ class Entry {
 
 	public String serialize() {
 		switch(type) {
-		case ARRAY:
-			return ((JsonArray) value).serialize();
-		case OBJECT:
-			return ((JsonObject) value).serialize();
+    case OBJECT:
+			return ((Json) value).serialize();
 		case STRING:
-			return '"' + JsonObject.escape((String) value) + '"';
+			return '"' + Json.escape((String) value) + '"';
 		default:
 			return "" + value;
 		}
