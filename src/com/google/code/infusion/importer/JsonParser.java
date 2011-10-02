@@ -1,19 +1,18 @@
 package com.google.code.infusion.importer;
 
-import com.google.code.infusion.json.JsonArray;
-import com.google.code.infusion.json.JsonObject;
+import com.google.code.infusion.json.Json;
 import com.google.code.infusion.service.Table;
 
 public class JsonParser {
 
   
   public static Table parse(String json) {
-    JsonArray parsed = JsonArray.parse(json);
-    Table table = new Table(JsonArray.create(), JsonArray.create());
+    Json parsed = Json.parse(json);
+    Table table = new Table(Json.createArray(), Json.createArray());
 
     for (int i = 0; i < parsed.length(); i++) {
-      JsonObject o = parsed.getObject(i);
-      JsonArray newRow = JsonArray.create();
+      Json o = parsed.getJson(i);
+      Json newRow = Json.createArray();
       for (String key: o.getKeys()) {
         int idx = table.getIndex(key);
         if (idx == -1) {

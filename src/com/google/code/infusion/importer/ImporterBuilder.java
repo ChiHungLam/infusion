@@ -2,7 +2,7 @@ package com.google.code.infusion.importer;
 
 import java.util.Iterator;
 
-import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.json.Json;
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
 import com.google.code.infusion.util.Util;
@@ -81,7 +81,7 @@ public class ImporterBuilder {
   
   public Importer importData(final ImporterCallback callback) {
     final String[] cols;
-    final Iterator<JsonArray> rows;
+    final Iterator<Json> rows;
     switch(type == null ? Type.CSV : type) {
     case BIBTEX: {
       Table table = BibtexParser.parse(data);

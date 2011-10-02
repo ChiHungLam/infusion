@@ -2,7 +2,7 @@ package com.google.code.infusion.importer;
 
 import java.util.Iterator;
 
-import com.google.code.infusion.json.JsonArray;
+import com.google.code.infusion.json.Json;
 import com.google.code.infusion.service.FusionTableService;
 import com.google.code.infusion.service.Table;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -10,13 +10,13 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 public class Importer {
   private final FusionTableService service;
   private final String[] cols;
-  private final Iterator<JsonArray> rows;
+  private final Iterator<Json> rows;
   private final int offset;
   private final ImporterCallback callback;
   private String tableId;
   private int count;
   
-  Importer(FusionTableService service, final String[] cols, final Iterator<JsonArray> rows, int offset, ImporterCallback callback) {
+  Importer(FusionTableService service, final String[] cols, final Iterator<Json> rows, int offset, ImporterCallback callback) {
     this.service = service;
     this.cols = cols;
     this.rows = rows;
@@ -26,7 +26,7 @@ public class Importer {
   
   // package
   void run() {
-    final Table buf = new Table(cols, JsonArray.create());
+    final Table buf = new Table(cols, Json.createArray());
     if (!rows.hasNext()) {
       callback.onSuccess(this);
       return;
