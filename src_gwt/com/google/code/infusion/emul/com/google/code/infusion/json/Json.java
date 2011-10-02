@@ -130,9 +130,9 @@ public class Json extends JavaScriptObject {
       return 3;
     }
     if (type == "string") {
-      return 5;
+      return 4;
     }
-    return 4;
+    return 3;
   }-*/;
   
   private final native boolean isArray() /*-{

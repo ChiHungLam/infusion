@@ -57,6 +57,9 @@ public class Json {
   }
 
   public final Type getType(int index) {
+    if (index >= array.size()) {
+      return Type.NULL;
+    }
     Entry o = array.get(index);
     return o == null ? Type.NULL : o.type;
   }
